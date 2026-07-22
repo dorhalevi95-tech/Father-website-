@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>טיפול במגע - תולי הלוי, עיסוי טיפולי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;600&family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --umber:#2B211C;
+    --mocha:#3D2F26;
+    --mocha-light:#4A392F;
+    --gold:#C9A24B;
+    --gold-soft:#E3C577;
+    --sage:#8A9A7E;
+    --ivory:#F3ECDD;
+    --taupe:#B8A98F;
+    --line: rgba(243,236,221,0.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--umber);
+    color:var(--ivory);
+    font-family:'Heebo', sans-serif;
+    font-weight:300;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.display{
+    font-family:'Frank Ruhl Libre', serif;
+    font-weight:500;
+    letter-spacing:-0.01em;
+  }
+  a{color:inherit; text-decoration:none;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 32px;}
+  img{max-width:100%; display:block;}
+
+  /* ---------- NAV ---------- */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:rgba(43,33,28,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav.wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    height:76px; gap:20px;
+  }
+  .brand{
+    font-family:'Frank Ruhl Libre', serif; font-size:1.25rem; font-weight:500;
+    display:flex; align-items:center; gap:10px; white-space:nowrap;
+  }
+  .brand-mark{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--gold);
+    box-shadow:0 0 12px var(--gold);
+    flex-shrink:0;
+  }
+  .nav-links{display:flex; gap:32px; font-size:0.92rem; color:var(--taupe);}
+  .nav-links a:hover{color:var(--ivory);}
+  .nav-right{display:flex; align-items:center; gap:14px;}
+  .lang-toggle{
+    border:1px solid var(--line); background:transparent; color:var(--ivory);
+    padding:9px 18px; border-radius:100px; font-size:0.82rem; font-family:'Heebo', sans-serif;
+    cursor:pointer; transition:border-color .2s ease, background .2s ease; white-space:nowrap;
+  }
+  .lang-toggle:hover{border-color:var(--gold-soft); background:rgba(243,236,221,0.05);}
+  .nav-cta{
+    background:var(--gold); color:var(--umber); padding:10px 22px;
+    border-radius:100px; font-size:0.88rem; font-weight:500;
+    transition:transform .25s ease, box-shadow .25s ease; white-space:nowrap;
+  }
+  .nav-cta:hover{transform:translateY(-1px); box-shadow:0 8px 20px rgba(201,162,75,0.35);}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding:170px 0 120px;
+    position:relative;
+  }
+  .hero .wrap{
+    display:grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap:64px;
+    align-items:center;
+  }
+  .portrait-wrap{
+    position:relative;
+    display:flex; justify-content:center;
+  }
+  .portrait-glow{
+    position:absolute;
+    width:340px; height:340px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(201,162,75,0.35), transparent 70%);
+    filter:blur(10px);
+    animation:breathe 5s ease-in-out infinite;
+    top:50%; left:50%; transform:translate(-50%,-50%);
+  }
+  @keyframes breathe{
+    0%,100%{opacity:0.6; transform:translate(-50%,-50%) scale(0.94);}
+    50%{opacity:1; transform:translate(-50%,-50%) scale(1.04);}
+  }
+  .portrait{
+    position:relative;
+    width:280px; height:280px;
+    border-radius:50%;
+    background: linear-gradient(150deg, var(--mocha-light), var(--mocha));
+    border:2px solid var(--gold-soft);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Frank Ruhl Libre', serif; font-size:0.85rem; color:var(--taupe);
+    text-align:center; padding:24px;
+    overflow:hidden;
+  }
+  .portrait span.tag{
+    position:absolute; bottom:16px; font-size:0.72rem; color:var(--gold-soft);
+    letter-spacing:0.06em;
+  }
+  .eyebrow{
+    color:var(--gold-soft); text-transform:uppercase; letter-spacing:0.1em;
+    font-size:0.78rem; font-weight:500; margin-bottom:18px; display:block;
+  }
+  .hero h1{
+    font-size:clamp(2.1rem, 4vw, 3.2rem);
+    line-height:1.18;
+    margin-bottom:22px;
+  }
+  .hero h1 em{color:var(--sage); font-style:normal;}
+  .hero p.lead{
+    color:var(--taupe); font-size:1.08rem; max-width:480px; margin-bottom:32px;
+  }
+  .hero-ctas{display:flex; gap:16px; flex-wrap:wrap;}
+  .btn-primary{
+    background:var(--gold); color:var(--umber); padding:15px 30px;
+    border-radius:100px; font-weight:500; font-size:0.95rem;
+    transition:transform .25s ease, box-shadow .25s ease;
+    display:inline-block;
+  }
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(201,162,75,0.35);}
+  .btn-ghost{
+    border:1px solid var(--line); color:var(--ivory); padding:15px 28px;
+    border-radius:100px; font-size:0.95rem;
+    transition:border-color .25s ease, background .25s ease;
+    display:inline-block;
+  }
+  .btn-ghost:hover{border-color:var(--gold-soft); background:rgba(243,236,221,0.04);}
+
+  /* ---------- WAVE DIVIDER ---------- */
+  .wave{width:100%; display:block; height:60px;}
+  .wave path{fill:var(--mocha);}
+
+  /* ---------- MESSAGE FROM HIM ---------- */
+  .message{
+    background:var(--mocha);
+    padding:90px 0 100px;
+  }
+  .message .wrap{max-width:760px; text-align:center;}
+  .quote-mark{
+    font-family:'Frank Ruhl Libre', serif; font-size:4rem; color:var(--gold-soft);
+    line-height:1; margin-bottom:6px;
+  }
+  .message p.quote{
+    font-family:'Frank Ruhl Libre', serif; font-weight:400; font-size:clamp(1.2rem, 2.1vw, 1.55rem);
+    color:var(--ivory); line-height:1.6; margin-bottom:28px;
+  }
+  .message .signature{color:var(--gold-soft); font-size:0.95rem; letter-spacing:0.02em;}
+
+  /* ---------- SECTION HEADINGS ---------- */
+  .section-head{margin-bottom:56px; max-width:560px;}
+  .section-head .eyebrow{margin-bottom:14px;}
+  .section-head h2{font-size:clamp(1.7rem, 2.8vw, 2.2rem);}
+  .section-head p{color:var(--taupe); margin-top:14px; font-size:1rem;}
+
+  /* ---------- SERVICES / FEATURES ---------- */
+  .services{padding:110px 0;}
+  .feature-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:2px;
+    background:var(--line); border:1px solid var(--line); border-radius:18px; overflow:hidden;
+  }
+  .feature-card{
+    background:var(--umber); padding:38px 30px; transition:background .3s ease;
+  }
+  .feature-card:hover{background:var(--mocha);}
+  .feature-icon{
+    width:42px; height:42px; border-radius:10px; background:rgba(138,154,126,0.15);
+    display:flex; align-items:center; justify-content:center; margin-bottom:20px;
+  }
+  .feature-card h3{font-size:1.06rem; margin-bottom:10px; font-weight:500;}
+  .feature-card p{color:var(--taupe); font-size:0.92rem;}
+
+  /* ---------- REVIEWS ---------- */
+  .reviews{background:var(--mocha); padding:110px 0;}
+  .review-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:24px;}
+  .review-card{
+    background:var(--umber); border:1px solid var(--line); border-radius:16px;
+    padding:30px; display:flex; flex-direction:column; gap:16px;
+  }
+  .stars{color:var(--gold-soft); letter-spacing:2px; font-size:0.95rem;}
+  .review-card p.body{color:var(--ivory); font-size:0.95rem; flex:1;}
+  .reviewer{display:flex; align-items:center; gap:12px;}
+  .reviewer .avatar{
+    width:36px; height:36px; border-radius:50%; background:var(--sage);
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.8rem; font-weight:500; color:var(--umber); flex-shrink:0;
+  }
+  .reviewer .name{font-size:0.88rem; color:var(--taupe);}
+
+  /* ---------- BOOKING ---------- */
+  .booking{padding:110px 0;}
+  .booking-panel{
+    background:linear-gradient(150deg, var(--mocha-light), var(--mocha));
+    border:1px solid var(--line); border-radius:24px;
+    padding:56px; display:grid; grid-template-columns:0.9fr 1.1fr; gap:56px;
+  }
+  .booking-info h2{font-size:1.8rem; margin-bottom:16px;}
+  .booking-info p{color:var(--taupe); margin-bottom:28px;}
+  .booking-detail{display:flex; gap:14px; margin-bottom:18px; align-items:flex-start;}
+  .booking-detail .dot{
+    width:8px; height:8px; border-radius:50%; background:var(--gold-soft);
+    margin-top:8px; flex-shrink:0;
+  }
+  .booking-detail .label{font-size:0.85rem; color:var(--taupe); text-transform:uppercase; letter-spacing:0.04em;}
+  .booking-detail .value{font-size:0.98rem; color:var(--ivory);}
+
+  form{display:flex; flex-direction:column; gap:16px;}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  label{font-size:0.8rem; color:var(--taupe); margin-bottom:6px; display:block;}
+  input, select, textarea{
+    width:100%; background:rgba(243,236,221,0.06); border:1px solid var(--line);
+    color:var(--ivory); padding:13px 14px; border-radius:10px; font-family:'Heebo', sans-serif;
+    font-size:0.95rem; transition:border-color .2s ease;
+  }
+  input::placeholder, textarea::placeholder{color:rgba(184,169,143,0.6);}
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--gold-soft);}
+  textarea{resize:vertical; min-height:80px;}
+  .submit-btn{
+    background:var(--gold); color:var(--umber); border:none; padding:16px;
+    border-radius:10px; font-weight:500; font-size:0.98rem; cursor:pointer;
+    font-family:'Heebo', sans-serif;
+    transition:transform .2s ease, box-shadow .2s ease; margin-top:6px;
+  }
+  .submit-btn:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(201,162,75,0.3);}
+  .confirm-msg{
+    display:none; background:rgba(138,154,126,0.15); border:1px solid var(--sage);
+    color:var(--ivory); padding:16px; border-radius:10px; font-size:0.9rem; margin-top:6px;
+  }
+  .confirm-msg.show{display:block;}
+
+  /* ---------- GALLERY ---------- */
+  .gallery{background:var(--mocha); padding:110px 0;}
+  .gallery-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); grid-auto-rows:140px; gap:10px;
+  }
+  .gallery-grid div{
+    border-radius:14px; background:linear-gradient(150deg, var(--mocha-light), var(--umber));
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--taupe); font-size:0.78rem; text-align:center; padding:10px;
+  }
+  .gallery-grid div:nth-child(1){grid-column:span 2; grid-row:span 2;}
+  .gallery-grid div:nth-child(4){grid-row:span 2;}
+
+  /* ---------- CONTACT ---------- */
+  .contact{padding:110px 0 60px;}
+  .contact-grid{display:grid; grid-template-columns:1fr 1fr; gap:56px;}
+  .contact-card{
+    background:var(--umber); border:1px solid var(--line); border-radius:18px; padding:36px;
+  }
+  .contact-item{display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--line);}
+  .contact-item:last-child{border-bottom:none;}
+  .contact-item .label{color:var(--taupe); font-size:0.8rem; margin-bottom:4px;}
+  .contact-item .value{font-size:1rem;}
+  .map-block{
+    border-radius:18px; border:1px solid var(--line);
+    background:
+      radial-gradient(circle at 30% 40%, rgba(138,154,126,0.18), transparent 55%),
+      radial-gradient(circle at 70% 65%, rgba(201,162,75,0.15), transparent 55%),
+      var(--mocha);
+    min-height:280px; display:flex; align-items:center; justify-content:center;
+    color:var(--taupe); font-size:0.9rem; text-align:center; padding:20px;
+  }
+
+  footer{
+    border-top:1px solid var(--line); padding:40px 0; text-align:center;
+    color:var(--taupe); font-size:0.85rem;
+  }
+  footer .brand-mark-row{display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:12px;}
+
+  /* ---------- REVEAL ---------- */
+  .reveal{opacity:1; transform:none;}
+  .reveal.animate{opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
+  .reveal.animate.in{opacity:1; transform:translateY(0);}
+
+  @media (max-width:860px){
+    .nav-links{display:none;}
+    .hero .wrap{grid-template-columns:1fr; text-align:center;}
+    .hero p.lead{margin-left:auto; margin-right:auto;}
+    .hero-ctas{justify-content:center;}
+    .feature-grid{grid-template-columns:1fr;}
+    .review-grid{grid-template-columns:1fr;}
+    .booking-panel{grid-template-columns:1fr; padding:32px;}
+    .form-row{grid-template-columns:1fr;}
+    .gallery-grid{grid-template-columns:repeat(2, 1fr);}
+    .contact-grid{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .portrait-glow{animation:none;}
+    .reveal{transition:none; opacity:1; transform:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="brand"><span class="brand-mark"></span><span data-en="Touch Therapy">טיפול במגע</span></div>
+    <div class="nav-links">
+      <a href="#about" data-en="About">אודות</a>
+      <a href="#services" data-en="Services">טיפולים</a>
+      <a href="#reviews" data-en="Reviews">ביקורות</a>
+      <a href="#gallery" data-en="Gallery">גלריה</a>
+      <a href="#contact" data-en="Contact">צור קשר</a>
+    </div>
+    <div class="nav-right">
+      <button class="lang-toggle" id="langToggle" data-en="עברית">English</button>
+      <a href="#booking" class="nav-cta" data-en="Book a session">קביעת תור</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="portrait-wrap">
+      <div class="portrait-glow"></div>
+      <div class="portrait">
+        <span data-en="[ Replace with a warm, natural photo of Tooli — at work or smiling in the clinic ]">[ להחליף בתמונה חמה וטבעית של תולי — בעבודה או מחייך במרפאה ]</span>
+        <span class="tag" data-en="Photo goes here">כאן תתווסף תמונה</span>
+      </div>
+    </div>
+    <div>
+      <span class="eyebrow" data-en="Massage Therapy &amp; Bodywork">עיסוי טיפולי וטיפולי גוף</span>
+      <h1 data-en="Real hands.<br>Real care. <em>Real relief.</em>">ידיים של ממש.<br>טיפול של ממש. <em>הקלה של ממש.</em></h1>
+      <p class="lead" data-en="Tooli has been drawn to healing work his whole life — treating friends and family for years before turning it into a certified profession. Every session in Shoham is unhurried, personal, and built around what your body actually needs today.">תולי נמשך לעולם הריפוי כל חייו — טיפל בחברים ובבני משפחה במשך שנים, עד שלפני כשנתיים החליט להפוך את זה למקצוע ולהסמיך את עצמו רשמית בתחום. כל טיפול בשוהם נעשה בסבלנות, באופן אישי, ומותאם בדיוק למה שהגוף שלכם צריך היום.</p>
+      <div class="hero-ctas">
+        <a href="#booking" class="btn-primary" data-en="Book your session">קביעת טיפול</a>
+        <a href="#about" class="btn-ghost" data-en="Meet your therapist">הכירו את המטפל</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<svg class="wave" viewBox="0 0 1200 60" preserveAspectRatio="none"><path d="M0,30 C300,80 900,-20 1200,30 L1200,60 L0,60 Z"></path></svg>
+
+<section class="message" id="about">
+  <div class="wrap reveal">
+    <div class="quote-mark">"</div>
+    <p class="quote" data-en="I've felt drawn to this work my whole life — treating friends, family, and everyone around me long before it was official. About two years ago that pull became something I couldn't ignore, and I decided to get properly certified in the field. Every session starts with listening — I want to know exactly what your body is carrying before I begin.">נמשכתי לתחום הזה לאורך כל חיי — טיפלתי בחברים, בחברות ובבני משפחה עוד הרבה לפני שזה היה רשמי. לפני כשנתיים נוצר בי צורך ודחף שלא יכולתי להתעלם ממנו, והחלטתי להירשם לקורס הסמכה בתחום. כל טיפול מתחיל בהקשבה — אני רוצה לדעת בדיוק מה הגוף שלכם נושא לפני שאני מתחיל.</p>
+    <div class="signature" data-en="— Tooli Halevy, Massage Therapist">— תולי הלוי, מטפל בעיסוי</div>
+  </div>
+</section>
+
+<section class="services" id="services">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow" data-en="Treatments">טיפולים</span>
+      <h2 data-en="Two hands-on approaches, chosen for what your body needs" style="color:var(--ivory); font-weight:600;">שתי גישות מקצועיות, נבחרות לפי מה שהגוף שלכם צריך</h2>
+      <p data-en="300 NIS per hour. We'll talk before your session to decide what's right for you.">300 ש"ח לשעה. נדבר לפני הטיפול כדי להחליט מה הכי מתאים לכם.</p>
+    </div>
+    <div class="feature-grid reveal" style="grid-template-columns:repeat(2, 1fr);">
+      <div class="feature-card">
+        <div class="feature-icon">🌿</div>
+        <h3 data-en="Deep Swedish Massage">עיסוי שוודי עמוק</h3>
+        <p data-en="Full-body work that releases fascia and joints, locating and treating pressure points wherever your body is holding tension.">טיפול בשחרור הגוף מפשיה, מפרקים ועוד — עיסוי שמאתר בכל הגוף נקודות לחץ ומטפל בהן.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔥</div>
+        <h3 data-en="Cupping Therapy">כוסות רוח</h3>
+        <p data-en="Two goals in one treatment: 2–4 cups placed around a stubborn pain point to trigger the body's own healing response, plus nerve release along the muscles.">טיפול בעל שתי מטרות: 2–4 כוסות רוח סביב נקודת כאב קשה, לגיוס תגובת הריפוי הטבעית של הגוף, יחד עם שחרור עצבים לאורך השרירים.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="reviews" id="reviews">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow" data-en="What People Say">מה אומרים עלינו</span>
+      <h2 data-en="Trusted by regulars across Shoham">מהימן על ידי לקוחות קבועים בשוהם</h2>
+    </div>
+    <div class="review-grid reveal">
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p class="body" data-en="Golden hands that know exactly how to locate the spot in your body and release the pain.">ידיים של זהב שיודעות לאתר את האזור בגוף ולשחרר את הכאב.</p>
+        <div class="reviewer"><div class="avatar">א</div><div class="name" data-en="Advah">אדווה</div></div>
+      </div>
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p class="body" data-en="I came to Tooli after months of ongoing neck pain. Right after the first session I felt real relief — I've been coming back every Monday at 11am ever since.">הגעתי לתולי אחרי כאב מתמשך בצוואר שנמשך חודשים. מיד אחרי הטיפול הראשון הייתה הרגשה של שחרור — ומאז אני מגיעה כל יום שני ב-11:00.</p>
+        <div class="reviewer"><div class="avatar">מ</div><div class="name" data-en="Marina">מרינה</div></div>
+      </div>
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p class="body" data-en="Tooli has electric hands — he finds exactly what's wrong and fixes it. You feel like a new person after the treatment.">לתולי יש ידיים חשמליות — הוא מוצא בדיוק מה לא בסדר ומתקן. מרגישים כמו אדם חדש אחרי הטיפול.</p>
+        <div class="reviewer"><div class="avatar">כ</div><div class="name" data-en="Kalanit">כלנית</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="booking" id="booking">
+  <div class="wrap">
+    <div class="booking-panel reveal">
+      <div class="booking-info">
+        <span class="eyebrow" data-en="Reserve Your Time">שריינו את הזמן שלכם</span>
+        <h2 data-en="Book a session">קביעת תור</h2>
+        <p data-en="Fill in a few details and we'll confirm your appointment by phone or message — usually within a few hours.">מלאו כמה פרטים ואנחנו נאשר את התור שלכם בטלפון או בהודעה — בדרך כלל תוך כמה שעות.</p>
+        <div class="booking-detail"><div class="dot"></div><div><div class="label" data-en="Hours">שעות פעילות</div><div class="value" data-en="No fixed hours — by appointment, available 24/7">אין שעות קבועות — בתיאום מראש, זמין 24/7</div></div></div>
+        <div class="booking-detail"><div class="dot"></div><div><div class="label" data-en="Price">מחיר</div><div class="value" data-en="300 NIS per hour">300 ש"ח לשעה</div></div></div>
+        <div class="booking-detail"><div class="dot"></div><div><div class="label" data-en="Fastest way to book">הכי מהיר לתיאום</div><div class="value" data-en="Call or message on WhatsApp">טלפון או הודעת וואטסאפ</div></div></div>
+        <a href="https://wa.me/972535308245" class="btn-primary" style="display:inline-block; margin-top:8px;" data-en="Message on WhatsApp">שליחת הודעה בוואטסאפ</a>
+      </div>
+      <div>
+        <form id="bookingForm">
+          <div class="form-row">
+            <div><label data-en="Full name">שם מלא</label><input type="text" required placeholder="השם שלך" data-en-placeholder="Your name"></div>
+            <div><label data-en="Phone number">מספר טלפון</label><input type="tel" required placeholder="הטלפון שלך" data-en-placeholder="Your phone"></div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label data-en="Service">טיפול</label>
+              <select required>
+                <option value="" data-en="Choose a service">בחרו טיפול</option>
+                <option data-en="Deep Swedish Massage">עיסוי שוודי עמוק</option>
+                <option data-en="Cupping Therapy">כוסות רוח</option>
+                <option data-en="Not sure — recommend for me">לא בטוח/ה — המליצו לי</option>
+              </select>
+            </div>
+            <div><label data-en="Preferred date">תאריך מועדף</label><input type="date" required></div>
+          </div>
+          <div><label data-en="Anything we should know?">משהו שכדאי שנדע?</label><textarea placeholder="אזורי מתח, פציעות קודמות, זמן מועדף ביום..." data-en-placeholder="Areas of tension, past injuries, preferred time of day..."></textarea></div>
+          <button type="submit" class="submit-btn" data-en="Request booking">שלחו בקשה לתור</button>
+          <div class="confirm-msg" id="confirmMsg" data-en="Thank you! Your request has been noted. This form is a preview — connect it to a phone, email, or booking tool so requests reach you directly.">תודה! הבקשה שלכם נקלטה. הטופס הזה הוא תצוגה מקדימה — יש לחבר אותו לטלפון, אימייל או כלי הזמנות כדי שהבקשות יגיעו אליכם ישירות.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="gallery" id="gallery">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow" data-en="Take a Look Inside">הצצה פנימה</span>
+      <h2 data-en="The clinic, in a few photos">המרפאה, בכמה תמונות</h2>
+    </div>
+    <div class="gallery-grid reveal">
+      <div data-en="Treatment room photo">תמונת חדר טיפולים</div>
+      <div data-en="Reception / entrance">כניסה / קבלה</div>
+      <div data-en="Hot stones &amp; oils">אבנים חמות ושמנים</div>
+      <div data-en="Tooli at work">תולי בעבודה</div>
+      <div data-en="Waiting area">אזור המתנה</div>
+      <div data-en="Clinic exterior">חזית המרפאה</div>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow" data-en="Visit or Reach Out">בקרו אותנו או צרו קשר</span>
+      <h2 data-en="Find us">איך למצוא אותנו</h2>
+    </div>
+    <div class="contact-grid reveal">
+      <div class="contact-card">
+        <div class="contact-item"><div><div class="label" data-en="Address">כתובת</div><div class="value" data-en="Hazohar St. 15, Apt. 5, 2nd floor, Shoham — parking available for patients">רח' הזוהר 15, דירה 5, קומה 2, שוהם — יש חניה למטופלים</div></div></div>
+        <div class="contact-item"><div><div class="label" data-en="Phone">טלפון</div><div class="value" data-en="053-530-8245">053-530-8245</div></div></div>
+        <div class="contact-item"><div><div class="label" data-en="Email">אימייל</div><div class="value" data-en="Tooli.thrapy@gmail.com">Tooli.thrapy@gmail.com</div></div></div>
+        <div class="contact-item"><div><div class="label" data-en="Hours">שעות פעילות</div><div class="value" data-en="No fixed hours — by appointment, available 24/7">אין שעות קבועות — בתיאום מראש, זמין 24/7</div></div></div>
+      </div>
+      <div class="map-block" data-en="Map preview — a live map with the clinic's real address can be added once the site is published">תצוגה מקדימה של מפה — ניתן להוסיף מפה חיה עם הכתובת האמיתית ברגע שהאתר יעלה לאוויר</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="brand-mark-row"><span class="brand-mark"></span><span data-en="Touch Therapy">טיפול במגע</span></div>
+  <span data-en="© 2026 Tooli Halevy — Touch Therapy. All rights reserved.">© 2026 תולי הלוי — טיפול במגע. כל הזכויות שמורות.</span>
+</footer>
+
+<script>
+  // Capture original Hebrew content before any toggling
+  const translatable = document.querySelectorAll('[data-en]');
+  translatable.forEach(el => { el.dataset.he = el.innerHTML; });
+
+  const placeholders = document.querySelectorAll('[data-en-placeholder]');
+  placeholders.forEach(el => { el.dataset.hePlaceholder = el.placeholder; });
+
+  const langToggle = document.getElementById('langToggle');
+  let currentLang = 'he';
+
+  function setLang(lang){
+    currentLang = lang;
+    document.documentElement.lang = lang === 'he' ? 'he' : 'en';
+    document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+
+    translatable.forEach(el => {
+      el.innerHTML = lang === 'he' ? el.dataset.he : el.dataset.en;
+    });
+    placeholders.forEach(el => {
+      el.placeholder = lang === 'he' ? el.dataset.hePlaceholder : el.dataset.enPlaceholder;
+    });
+  }
+
+  langToggle.addEventListener('click', () => setLang(currentLang === 'he' ? 'en' : 'he'));
+  setLang('he');
+
+  document.getElementById('bookingForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    document.getElementById('confirmMsg').classList.add('show');
+  });
+
+  // Scroll-fade is a nice-to-have only; content is visible by default (see CSS)
+  // so it never breaks in email/file previews that don't support this.
+  try{
+    const revealEls = document.querySelectorAll('.reveal');
+    if('IntersectionObserver' in window){
+      revealEls.forEach(el=>el.classList.add('animate'));
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(entry=>{
+          if(entry.isIntersecting){
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, {threshold:0.15});
+      revealEls.forEach(el=>io.observe(el));
+      // Safety net: if something goes wrong, force everything visible after 2s
+      setTimeout(()=>revealEls.forEach(el=>el.classList.add('in')), 2000);
+    }
+  }catch(e){ /* animation is optional — page already looks correct without it */ }
+</script>
+
+</body>
+</html>
