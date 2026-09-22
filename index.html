@@ -314,13 +314,10 @@
   .contact-item .value{font-size:1rem; color:var(--ink);}
   .map-block{
     border-radius:16px; border:1px solid var(--line-soft);
-    background:
-      radial-gradient(circle at 30% 40%, rgba(92,107,69,0.14), transparent 55%),
-      radial-gradient(circle at 70% 65%, rgba(177,90,52,0.12), transparent 55%),
-      var(--card);
-    min-height:280px; display:flex; align-items:center; justify-content:center;
-    color:var(--ink-soft); font-size:0.9rem; text-align:center; padding:20px;
+    overflow:hidden;
+    min-height:280px;
   }
+  .map-block iframe{display:block; width:100%; height:100%; min-height:280px;}
 
   footer{
     border-top:1px solid var(--line); padding:40px 0; text-align:center;
@@ -464,7 +461,7 @@
         <div class="booking-detail"><div class="dot"></div><div><div class="label" data-en="Hours">שעות פעילות</div><div class="value" data-en="No fixed hours — by appointment, available 24/7">אין שעות קבועות — בתיאום מראש, זמין 24/7</div></div></div>
         <div class="booking-detail"><div class="dot"></div><div><div class="label" data-en="Price">מחיר</div><div class="value" data-en="300 NIS per hour">300 ש"ח לשעה</div></div></div>
         <div class="booking-detail"><div class="dot"></div><div><div class="label" data-en="Fastest way to book">הכי מהיר לתיאום</div><div class="value" data-en="Call or message on WhatsApp">טלפון או הודעת וואטסאפ</div></div></div>
-        <a href="https://wa.me/972535308245" class="btn-primary" style="display:inline-block; margin-top:8px;" data-en="Message on WhatsApp">שליחת הודעה בוואטסאפ</a>
+        <a href="https://wa.me/972503518385" class="btn-primary" style="display:inline-block; margin-top:8px;" data-en="Message on WhatsApp">שליחת הודעה בוואטסאפ</a>
       </div>
       <div>
         <form id="bookingForm">
@@ -516,11 +513,13 @@
     <div class="contact-grid reveal">
       <div class="contact-card">
         <div class="contact-item"><div><div class="label" data-en="Address">כתובת</div><div class="value" data-en="Hazohar St. 15, Apt. 5, 2nd floor, Shoham — parking available for patients">רח' הזוהר 15, דירה 5, קומה 2, שוהם — יש חניה למטופלים</div></div></div>
-        <div class="contact-item"><div><div class="label" data-en="Phone">טלפון</div><div class="value" data-en="053-530-8245">053-530-8245</div></div></div>
-        <div class="contact-item"><div><div class="label" data-en="Email">אימייל</div><div class="value" data-en="Tooli.thrapy@gmail.com">Tooli.thrapy@gmail.com</div></div></div>
+        <div class="contact-item"><div><div class="label" data-en="Phone">טלפון</div><div class="value" data-en="050-351-8385">050-351-8385</div></div></div>
+        <div class="contact-item"><div><div class="label" data-en="Email">אימייל</div><div class="value" data-en="toolih@gmail.com">toolih@gmail.com</div></div></div>
         <div class="contact-item"><div><div class="label" data-en="Hours">שעות פעילות</div><div class="value" data-en="No fixed hours — by appointment, available 24/7">אין שעות קבועות — בתיאום מראש, זמין 24/7</div></div></div>
       </div>
-      <div class="map-block" data-en="Map preview — a live map with the clinic's real address can be added once the site is published">תצוגה מקדימה של מפה — ניתן להוסיף מפה חיה עם הכתובת האמיתית ברגע שהאתר יעלה לאוויר</div>
+      <div class="map-block">
+        <iframe src="https://www.google.com/maps?q=%D7%A8%D7%97%D7%95%D7%91%20%D7%94%D7%96%D7%95%D7%94%D7%A8%2015%2C%20%D7%A9%D7%95%D7%94%D7%9D&output=embed" width="100%" height="100%" style="border:0; min-height:280px; border-radius:16px;" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map to Hazohar St. 15, Shoham"></iframe>
+      </div>
     </div>
   </div>
 </section>
