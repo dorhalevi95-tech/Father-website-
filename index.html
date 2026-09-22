@@ -301,6 +301,47 @@
   }
   .confirm-msg.show{display:block;}
 
+  /* ---------- BOOKING CTA (opens modal) ---------- */
+  .booking-cta-box{
+    display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+    gap:18px; height:100%; padding:20px 4px;
+  }
+  .booking-cta-box p{color:var(--ink-soft); font-size:0.95rem; max-width:38ch;}
+  .booking-open-btn{
+    background:var(--terracotta); color:var(--card); border:none; padding:17px 34px;
+    border-radius:9px; font-weight:500; font-size:1rem; cursor:pointer;
+    font-family:'Heebo', sans-serif;
+    transition:transform .2s ease, background .2s ease;
+  }
+  .booking-open-btn:hover{transform:translateY(-2px); background:var(--terracotta-deep);}
+
+  /* ---------- APPOINTMENT MODAL ---------- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(51,38,27,0.55); backdrop-filter:blur(2px);
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--card); border-radius:18px; max-width:560px; width:100%;
+    max-height:90vh; overflow-y:auto; padding:36px; position:relative;
+    box-shadow:0 30px 60px rgba(0,0,0,0.3);
+  }
+  .modal-close{
+    position:absolute; top:18px; inset-inline-end:18px;
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--line-soft);
+    background:var(--paper); color:var(--ink); font-size:1.1rem; line-height:1;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover{border-color:var(--terracotta);}
+  .modal-box h3{font-size:1.35rem; margin-bottom:8px; color:var(--ink); padding-inline-end:36px;}
+  .modal-box .modal-sub{color:var(--ink-soft); font-size:0.9rem; margin-bottom:24px;}
+  .modal-box form{display:flex; flex-direction:column; gap:16px;}
+  .modal-send-status{
+    display:none; color:var(--terracotta-deep); font-size:0.85rem; margin-top:-4px;
+  }
+  .modal-send-status.show{display:block;}
+
   /* ---------- GALLERY ---------- */
   .gallery{background:var(--paper-warm); padding:108px 0;}
   .gallery-grid{
@@ -480,28 +521,9 @@
         <div class="booking-detail"><div class="dot"></div><div><div class="label" data-en="Fastest way to book">הכי מהיר לתיאום</div><div class="value" data-en="Call or message on WhatsApp">טלפון או הודעת וואטסאפ</div></div></div>
         <a href="https://wa.me/972503518385" class="btn-primary" style="display:inline-block; margin-top:8px;" data-en="Message on WhatsApp">שליחת הודעה בוואטסאפ</a>
       </div>
-      <div>
-        <form id="bookingForm">
-          <div class="form-row">
-            <div><label data-en="Full name">שם מלא</label><input type="text" required placeholder="השם שלך" data-en-placeholder="Your name"></div>
-            <div><label data-en="Phone number">מספר טלפון</label><input type="tel" required placeholder="הטלפון שלך" data-en-placeholder="Your phone"></div>
-          </div>
-          <div class="form-row">
-            <div>
-              <label data-en="Service">טיפול</label>
-              <select required>
-                <option value="" data-en="Choose a service">בחרו טיפול</option>
-                <option data-en="Deep Swedish Massage">עיסוי שוודי עמוק</option>
-                <option data-en="Cupping Therapy">כוסות רוח</option>
-                <option data-en="Not sure — recommend for me">לא בטוח/ה — המליצו לי</option>
-              </select>
-            </div>
-            <div><label data-en="Preferred date">תאריך מועדף</label><input type="date" required></div>
-          </div>
-          <div><label data-en="Anything we should know?">משהו שכדאי שנדע?</label><textarea placeholder="אזורי מתח, פציעות קודמות, זמן מועדף ביום..." data-en-placeholder="Areas of tension, past injuries, preferred time of day..."></textarea></div>
-          <button type="submit" class="submit-btn" data-en="Request booking">שלחו בקשה לתור</button>
-          <div class="confirm-msg" id="confirmMsg" data-en="Thank you! Your request has been noted. This form is a preview — connect it to a phone, email, or booking tool so requests reach you directly.">תודה! הבקשה שלכם נקלטה. הטופס הזה הוא תצוגה מקדימה — יש לחבר אותו לטלפון, אימייל או כלי הזמנות כדי שהבקשות יגיעו אליכם ישירות.</div>
-        </form>
+      <div class="booking-cta-box">
+        <p data-en="Tap below, share a few details, and we'll get back to you by phone or WhatsApp to lock in a time.">לחצו למטה, שתפו כמה פרטים, ואנחנו נחזור אליכם בטלפון או בוואטסאפ לתיאום הזמן.</p>
+        <button type="button" class="booking-open-btn" onclick="openBookingModal()" data-en="Request an appointment">בקשת תור</button>
       </div>
     </div>
   </div>
@@ -546,6 +568,37 @@
   <span data-en="© 2026 Tooli Halevy — Touch Therapy. All rights reserved.">© 2026 תולי הלוי — טיפול במגע. כל הזכויות שמורות.</span>
 </footer>
 
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal-box">
+    <button type="button" class="modal-close" onclick="closeBookingModal()" aria-label="Close">✕</button>
+    <h3 data-en="Request an appointment">בקשת תור</h3>
+    <p class="modal-sub" data-en="Fill in your details and preferred time — we'll contact you to confirm.">מלאו את הפרטים והזמן המועדף עליכם — אנחנו ניצור איתכם קשר לאישור.</p>
+    <form id="appointmentForm">
+      <div class="form-row">
+        <div><label data-en="Full name">שם מלא</label><input type="text" id="apptName" required placeholder="השם שלך" data-en-placeholder="Your name"></div>
+        <div><label data-en="Phone or email">טלפון או אימייל</label><input type="text" id="apptContact" required placeholder="איך ליצור איתכם קשר" data-en-placeholder="How to reach you"></div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label data-en="Service">טיפול</label>
+          <select id="apptService" required>
+            <option value="" data-en="Choose a service">בחרו טיפול</option>
+            <option data-en="Deep Swedish Massage">עיסוי שוודי עמוק</option>
+            <option data-en="Cupping Therapy">כוסות רוח</option>
+            <option data-en="Not sure — recommend for me">לא בטוח/ה — המליצו לי</option>
+          </select>
+        </div>
+        <div><label data-en="Preferred day">יום מועדף</label><input type="date" id="apptDay" required></div>
+      </div>
+      <div><label data-en="Preferred time">שעה מועדפת</label><input type="time" id="apptTime"></div>
+      <div><label data-en="What's bothering you? (optional)">מה מטריד אתכם? (לא חובה)</label><textarea id="apptNotes" placeholder="אזורי מתח, פציעות קודמות, כל דבר שכדאי שנדע..." data-en-placeholder="Areas of tension, past injuries, anything we should know..."></textarea></div>
+      <button type="submit" class="submit-btn" id="apptSubmitBtn" data-en="Send request">שלחו בקשה</button>
+      <div class="modal-send-status" id="apptSendStatus" data-en="Sending...">שולח...</div>
+      <div class="confirm-msg" id="confirmMsg" data-en="Thank you! Your request was sent to Tooli by email, and a WhatsApp message has opened for you to send too — he'll contact you to confirm the time.">תודה! הבקשה שלכם נשלחה לתולי באימייל, ונפתחה עבורכם הודעת וואטסאפ לשליחה — הוא ייצור איתכם קשר לאישור הזמן.</div>
+    </form>
+  </div>
+</div>
+
 <script>
   // Capture original Hebrew content before any toggling
   const translatable = document.querySelectorAll('[data-en]');
@@ -573,9 +626,64 @@
   langToggle.addEventListener('click', () => setLang(currentLang === 'he' ? 'en' : 'he'));
   setLang('he');
 
-  document.getElementById('bookingForm').addEventListener('submit', function(e){
+  function openBookingModal(){
+    document.getElementById('bookingModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeBookingModal(){
+    document.getElementById('bookingModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('bookingModal').addEventListener('click', function(e){
+    if(e.target === this) closeBookingModal();
+  });
+
+  document.getElementById('appointmentForm').addEventListener('submit', function(e){
     e.preventDefault();
-    document.getElementById('confirmMsg').classList.add('show');
+
+    const name = document.getElementById('apptName').value.trim();
+    const contact = document.getElementById('apptContact').value.trim();
+    const serviceSelect = document.getElementById('apptService');
+    const service = serviceSelect.options[serviceSelect.selectedIndex].text;
+    const day = document.getElementById('apptDay').value;
+    const time = document.getElementById('apptTime').value;
+    const notes = document.getElementById('apptNotes').value.trim();
+
+    const submitBtn = document.getElementById('apptSubmitBtn');
+    const sendStatus = document.getElementById('apptSendStatus');
+    submitBtn.disabled = true;
+    sendStatus.classList.add('show');
+
+    const waLines = [
+      'בקשת תור חדשה מהאתר:',
+      'שם: ' + name,
+      'יצירת קשר: ' + contact,
+      'טיפול: ' + service,
+      'יום מועדף: ' + day,
+      time ? ('שעה מועדפת: ' + time) : null,
+      notes ? ('הערות: ' + notes) : null
+    ].filter(Boolean).join('\n');
+    const waUrl = 'https://wa.me/972503518385?text=' + encodeURIComponent(waLines);
+
+    fetch('https://formsubmit.co/ajax/Tooli.thrapy@gmail.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: 'בקשת תור חדשה — טיפול במגע',
+        'שם מלא': name,
+        'יצירת קשר': contact,
+        'טיפול': service,
+        'יום מועדף': day,
+        'שעה מועדפת': time || '—',
+        'הערות': notes || '—'
+      })
+    }).catch(()=>{}).finally(()=>{
+      window.open(waUrl, '_blank');
+      sendStatus.classList.remove('show');
+      submitBtn.disabled = false;
+      document.getElementById('confirmMsg').classList.add('show');
+      e.target.reset();
+    });
   });
 
   // Scroll-fade is a nice-to-have only; content is visible by default (see CSS)
