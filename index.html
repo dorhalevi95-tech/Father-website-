@@ -371,6 +371,7 @@
     display:none; color:var(--terracotta-deep); font-size:0.85rem; margin-top:-4px;
   }
   .modal-send-status.show{display:block;}
+  #appointmentForm[hidden]{display:none;}
 
   /* ---------- GALLERY ---------- */
   .gallery{background:var(--paper-warm); padding:108px 0;}
@@ -603,29 +604,32 @@
     <button type="button" class="modal-close" onclick="closeBookingModal()" aria-label="Close">✕</button>
     <h3 data-en="Request an appointment">בקשת תור</h3>
     <p class="modal-sub" data-en="Fill in your details and preferred time — we'll contact you to confirm.">מלאו את הפרטים והזמן המועדף עליכם — אנחנו ניצור איתכם קשר לאישור.</p>
-    <form id="appointmentForm">
+    <form id="appointmentForm" action="https://formsubmit.co/Tooli.thrapy@gmail.com" method="POST">
+      <input type="hidden" name="_subject" value="בקשת תור חדשה — טיפול במגע">
+      <input type="hidden" name="_template" value="table">
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_next" value="https://toolihealing.com/?sent=1#booking">
       <div class="form-row">
-        <div><label data-en="Full name">שם מלא</label><input type="text" id="apptName" required placeholder="השם שלך" data-en-placeholder="Your name"></div>
-        <div><label data-en="Phone or email">טלפון או אימייל</label><input type="text" id="apptContact" required placeholder="איך ליצור איתכם קשר" data-en-placeholder="How to reach you"></div>
+        <div><label data-en="Full name">שם מלא</label><input type="text" name="name" id="apptName" required placeholder="השם שלך" data-en-placeholder="Your name"></div>
+        <div><label data-en="Phone or email">טלפון או אימייל</label><input type="text" name="contact" id="apptContact" required placeholder="איך ליצור איתכם קשר" data-en-placeholder="How to reach you"></div>
       </div>
       <div class="form-row">
         <div>
           <label data-en="Service">טיפול</label>
-          <select id="apptService" required>
+          <select name="service" id="apptService" required>
             <option value="" data-en="Choose a service">בחרו טיפול</option>
             <option data-en="Deep Swedish Massage">עיסוי שוודי עמוק</option>
             <option data-en="Cupping Therapy">כוסות רוח</option>
             <option data-en="Not sure — recommend for me">לא בטוח/ה — המליצו לי</option>
           </select>
         </div>
-        <div><label data-en="Preferred day">יום מועדף</label><input type="date" id="apptDay" required></div>
+        <div><label data-en="Preferred day">יום מועדף</label><input type="date" name="preferred_day" id="apptDay" required></div>
       </div>
-      <div><label data-en="Preferred time">שעה מועדפת</label><input type="time" id="apptTime"></div>
-      <div><label data-en="What's bothering you? (optional)">מה מטריד אתכם? (לא חובה)</label><textarea id="apptNotes" placeholder="אזורי מתח, פציעות קודמות, כל דבר שכדאי שנדע..." data-en-placeholder="Areas of tension, past injuries, anything we should know..."></textarea></div>
+      <div><label data-en="Preferred time">שעה מועדפת</label><input type="time" name="preferred_time" id="apptTime"></div>
+      <div><label data-en="What's bothering you? (optional)">מה מטריד אתכם? (לא חובה)</label><textarea name="notes" id="apptNotes" placeholder="אזורי מתח, פציעות קודמות, כל דבר שכדאי שנדע..." data-en-placeholder="Areas of tension, past injuries, anything we should know..."></textarea></div>
       <button type="submit" class="submit-btn" id="apptSubmitBtn" data-en="Send request">שלחו בקשה</button>
-      <div class="modal-send-status" id="apptSendStatus" data-en="Sending...">שולח...</div>
-      <div class="confirm-msg" id="confirmMsg" data-en="Thank you! Your request was sent to Tooli by email, and a WhatsApp message has opened for you to send too — he'll contact you to confirm the time.">תודה! הבקשה שלכם נשלחה לתולי באימייל, ונפתחה עבורכם הודעת וואטסאפ לשליחה — הוא ייצור איתכם קשר לאישור הזמן.</div>
     </form>
+    <div class="confirm-msg" id="confirmMsg" data-en="Thank you! Your request was sent to Tooli by email, and a WhatsApp message opened for you to send too — he'll contact you to confirm the time.">תודה! הבקשה שלכם נשלחה לתולי באימייל, ונפתחה עבורכם הודעת וואטסאפ לשליחה — הוא ייצור איתכם קשר לאישור הזמן.</div>
   </div>
 </div>
 
@@ -668,9 +672,9 @@
     if(e.target === this) closeBookingModal();
   });
 
-  document.getElementById('appointmentForm').addEventListener('submit', function(e){
-    e.preventDefault();
-
+  // Opening WhatsApp must happen synchronously inside the click/submit handler,
+  // before any navigation — otherwise browsers silently block it as a popup.
+  document.getElementById('appointmentForm').addEventListener('submit', function(){
     const name = document.getElementById('apptName').value.trim();
     const contact = document.getElementById('apptContact').value.trim();
     const serviceSelect = document.getElementById('apptService');
@@ -678,11 +682,6 @@
     const day = document.getElementById('apptDay').value;
     const time = document.getElementById('apptTime').value;
     const notes = document.getElementById('apptNotes').value.trim();
-
-    const submitBtn = document.getElementById('apptSubmitBtn');
-    const sendStatus = document.getElementById('apptSendStatus');
-    submitBtn.disabled = true;
-    sendStatus.classList.add('show');
 
     const waLines = [
       'בקשת תור חדשה מהאתר:',
@@ -694,27 +693,21 @@
       notes ? ('הערות: ' + notes) : null
     ].filter(Boolean).join('\n');
     const waUrl = 'https://wa.me/972503518385?text=' + encodeURIComponent(waLines);
-
-    fetch('https://formsubmit.co/ajax/Tooli.thrapy@gmail.com', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        _subject: 'בקשת תור חדשה — טיפול במגע',
-        'שם מלא': name,
-        'יצירת קשר': contact,
-        'טיפול': service,
-        'יום מועדף': day,
-        'שעה מועדפת': time || '—',
-        'הערות': notes || '—'
-      })
-    }).catch(()=>{}).finally(()=>{
-      window.open(waUrl, '_blank');
-      sendStatus.classList.remove('show');
-      submitBtn.disabled = false;
-      document.getElementById('confirmMsg').classList.add('show');
-      e.target.reset();
-    });
+    window.open(waUrl, '_blank');
+    // No preventDefault: the form goes on to submit natively to FormSubmit,
+    // which then redirects back here with ?sent=1 (handled below).
   });
+
+  // After FormSubmit redirects back, show the confirmation and open the modal.
+  (function(){
+    const params = new URLSearchParams(location.search);
+    if(params.get('sent') === '1'){
+      openBookingModal();
+      document.getElementById('appointmentForm').hidden = true;
+      document.getElementById('confirmMsg').classList.add('show');
+      history.replaceState(null, '', location.pathname + location.hash);
+    }
+  })();
 
   // Scroll-fade is a nice-to-have only; content is visible by default (see CSS)
   // so it never breaks in email/file previews that don't support this.
