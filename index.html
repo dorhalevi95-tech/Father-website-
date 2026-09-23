@@ -603,7 +603,7 @@
   <div class="modal-box">
     <button type="button" class="modal-close" onclick="closeBookingModal()" aria-label="Close">✕</button>
     <h3 data-en="Request an appointment">בקשת תור</h3>
-    <p class="modal-sub" data-en="Fill in your details and preferred time — we'll contact you to confirm.">מלאו את הפרטים והזמן המועדף עליכם — אנחנו ניצור איתכם קשר לאישור.</p>
+    <p class="modal-sub" data-en="Fill in your details and preferred day — we'll contact you to arrange a time.">מלאו את הפרטים והיום המועדף עליכם — אנחנו ניצור איתכם קשר לתיאום השעה.</p>
     <form id="appointmentForm" action="https://formsubmit.co/tooli.therapy@gmail.com" method="POST">
       <input type="hidden" name="_subject" value="בקשת תור חדשה — טיפול במגע">
       <input type="hidden" name="_template" value="table">
@@ -625,7 +625,6 @@
         </div>
         <div><label data-en="Preferred day">יום מועדף</label><input type="date" name="preferred_day" id="apptDay" required></div>
       </div>
-      <div><label data-en="Preferred time">שעה מועדפת</label><input type="time" name="preferred_time" id="apptTime"></div>
       <div><label data-en="What's bothering you? (optional)">מה מטריד אתכם? (לא חובה)</label><textarea name="notes" id="apptNotes" placeholder="אזורי מתח, פציעות קודמות, כל דבר שכדאי שנדע..." data-en-placeholder="Areas of tension, past injuries, anything we should know..."></textarea></div>
       <button type="submit" class="submit-btn" id="apptSubmitBtn" data-en="Send request">שלחו בקשה</button>
     </form>
@@ -680,7 +679,6 @@
     const serviceSelect = document.getElementById('apptService');
     const service = serviceSelect.options[serviceSelect.selectedIndex].text;
     const day = document.getElementById('apptDay').value;
-    const time = document.getElementById('apptTime').value;
     const notes = document.getElementById('apptNotes').value.trim();
 
     const waLines = [
@@ -689,7 +687,6 @@
       'יצירת קשר: ' + contact,
       'טיפול: ' + service,
       'יום מועדף: ' + day,
-      time ? ('שעה מועדפת: ' + time) : null,
       notes ? ('הערות: ' + notes) : null
     ].filter(Boolean).join('\n');
     const waUrl = 'https://wa.me/972503518385?text=' + encodeURIComponent(waLines);
