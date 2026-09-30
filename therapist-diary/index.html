@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<!--
+  Security: this page must never talk to the network. The CSP below blocks every
+  fetch/XHR/WebSocket (connect-src 'none'), every external script, style, font,
+  image and frame. All patient data is encrypted in the browser (AES-256-GCM)
+  with a key derived from the therapist's password (PBKDF2-SHA256, 600,000 rounds).
+  Never insert user data with innerHTML — always textContent (see h()).
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>יומן טיפולים מאובטח</title>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --text:#1d2330; --muted:#667085; --line:#e3e6ec;
+  --accent:#2f5d8a; --accent-2:#e8eff7; --ok:#1f7a4d; --ok-bg:#e6f4ec;
+  --warn:#9a5b00; --warn-bg:#fff4e0; --bad:#b42318; --bad-bg:#fdecea;
+  --personal:#6b3fa0; --personal-bg:#f4eefb;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#14171c; --card:#1d2128; --text:#e7eaf0; --muted:#98a2b3; --line:#2e343e;
+    --accent:#7fb0e0; --accent-2:#1f2c3a; --ok:#6fd3a0; --ok-bg:#16301f;
+    --warn:#f5c26b; --warn-bg:#352812; --bad:#ff8a80; --bad-bg:#3a1a18;
+    --personal:#c8a6f0; --personal-bg:#2a2135;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:.2em 0 .6em} h2{font-size:1.25rem;margin:.2em 0 .6em} h3{font-size:1.05rem;margin:1.2em 0 .5em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:0 0 16px}
+.narrow{max-width:520px;margin:40px auto}
+label{display:block;font-weight:600;margin:12px 0 4px}
+label.inline{display:flex;gap:8px;align-items:flex-start;font-weight:500}
+label .req{color:var(--bad)}
+input,select,textarea{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+input[type=checkbox]{width:auto;margin-top:5px}
+textarea{min-height:90px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 14px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){button.primary{color:#0e1116}}
+button.danger{color:var(--bad);border-color:var(--bad)}
+button.link{border:none;background:none;color:var(--accent);padding:4px;text-decoration:underline}
+button:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.full{grid-column:1/-1}
+header.top{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+header.top .brand{font-weight:700;margin-left:12px}
+header.top nav{display:flex;gap:4px;flex-wrap:wrap}
+header.top nav button.active{background:var(--accent-2);border-color:var(--accent)}
+header.top .spacer{flex:1}
+#save-status{font-size:.85rem;color:var(--muted)}
+.muted{color:var(--muted)} .small{font-size:.87rem}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between}
+.filters{display:flex;gap:8px;margin:8px 0 12px} .filters input{flex:1}
+.filters select{width:auto}
+.list{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;gap:12px;align-items:center;justify-content:space-between;text-align:right;width:100%;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.row:hover{border-color:var(--accent)}
+.row .grow{flex:1}
+.badge{display:inline-block;font-size:.78rem;padding:2px 8px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.badge.ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.badge.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.badge.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.note{border-radius:10px;padding:10px 14px;margin:0 0 12px}
+.note.warn{background:var(--warn-bg);color:var(--warn)}
+.note.bad{background:var(--bad-bg);color:var(--bad)}
+.note.ok{background:var(--ok-bg);color:var(--ok)}
+.note.info{background:var(--accent-2)}
+.note ul{margin:.3em 0;padding-inline-start:1.2em}
+.section-title{margin:18px 0 4px;padding-top:10px;border-top:1px solid var(--line);font-weight:700;color:var(--accent)}
+.section-title.personal,.personal-box{color:var(--personal)}
+.personal-box{background:var(--personal-bg);border-radius:10px;padding:10px 14px;margin-top:12px}
+.personal-wrap{background:var(--personal-bg);border-radius:10px;padding:2px 14px 12px;margin-top:12px}
+dl.kv{display:grid;grid-template-columns:minmax(140px,220px) 1fr;gap:6px 14px;margin:0}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:640px){dl.kv{grid-template-columns:1fr} dl.kv dd{margin-bottom:6px}}
+.pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.amend{border-inline-start:3px solid var(--warn);padding:6px 12px;margin:8px 0;background:var(--warn-bg);border-radius:6px}
+.sig{margin-top:12px;font-size:.9rem;color:var(--ok)}
+.reckey{font:600 1.25rem/1.6 ui-monospace,Consolas,monospace;letter-spacing:.06em;direction:ltr;text-align:center;background:var(--accent-2);border-radius:10px;padding:14px;user-select:all}
+table.log{width:100%;border-collapse:collapse;font-size:.88rem}
+table.log td,table.log th{border-bottom:1px solid var(--line);padding:6px;text-align:right;vertical-align:top}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);max-width:560px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.guide h3{color:var(--accent)} .guide li{margin:.25em 0}
+details summary{cursor:pointer;color:var(--accent)}
+#print-area{display:none}
+@media print{
+  body{background:#fff;color:#000}
+  #app,dialog{display:none!important}
+  #print-area{display:block!important;font-size:11pt}
+  #print-area .pr-session{break-inside:avoid;border-top:1px solid #999;padding-top:6px;margin-top:10px}
+  #print-area dl.kv{grid-template-columns:170px 1fr}
+  #print-area dl.kv dt{color:#444}
+  #print-area .amend{background:#f3f3f3;border-color:#777}
+  #print-area .sig{color:#000}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="view-loading" class="wrap"><p class="muted">טוען…</p></section>
+
+  <section id="view-nosupport" class="wrap" hidden>
+    <div class="card narrow note bad">הדפדפן הזה אינו תומך בהצפנה הנדרשת (Web Crypto / IndexedDB). יש להשתמש בגרסה עדכנית של Chrome, Edge או Firefox, ולא במצב גלישה בסתר.</div>
+  </section>
+
+  <section id="view-setup" class="wrap" hidden>
+    <div class="card narrow">
+      <h1>הקמת יומן טיפולים מאובטח</h1>
+      <p class="muted small">כל המידע נשמר מוצפן במחשב הזה בלבד. שום נתון אינו נשלח לאינטרנט. ללא הסיסמה או מפתח השחזור לא ניתן לקרוא את המידע — גם לא על ידינו.</p>
+      <form id="setup-form" autocomplete="off">
+        <label>שם המטפל/ת המלא <span class="req">*</span></label>
+        <input id="su-name" required>
+        <label>מספר רישיון (פנקס הפסיכולוגים) <span class="req">*</span></label>
+        <input id="su-license" required>
+        <label>סיסמה (לפחות 12 תווים) <span class="req">*</span></label>
+        <input id="su-pw" type="password" autocomplete="new-password" minlength="12" required>
+        <label>אימות סיסמה <span class="req">*</span></label>
+        <input id="su-pw2" type="password" autocomplete="new-password" minlength="12" required>
+        <p class="muted small">מומלץ משפט-סיסמה ארוך (למשל ארבע-חמש מילים לא קשורות). הסיסמה אינה נשמרת בשום מקום.</p>
+        <div id="setup-error" class="note bad" hidden></div>
+        <div class="actions"><button class="primary" type="submit">המשך</button></div>
+      </form>
+      <div id="setup-rk" hidden>
+        <h2>מפתח שחזור</h2>
+        <p>זה המפתח היחיד שמאפשר לפתוח את היומן אם הסיסמה תישכח. <strong>רשמי אותו על נייר ושמרי במקום נעול</strong> (לא בקובץ במחשב, לא בצילום מסך ולא בענן).</p>
+        <div id="setup-rk-value" class="reckey"></div>
+        <label class="inline"><input type="checkbox" id="setup-rk-ok"> רשמתי את מפתח השחזור ושמרתי אותו במקום בטוח</label>
+        <div class="actions"><button class="primary" id="setup-finish" disabled>סיום והתחלת עבודה</button></div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:22px 0 10px">
+      <p class="small muted">עוברת למחשב חדש? <button class="link" id="setup-import" type="button">שחזור מקובץ גיבוי מוצפן</button></p>
+    </div>
+  </section>
+
+  <section id="view-unlock" class="wrap" hidden>
+    <div class="card narrow">
+      <h1>יומן טיפולים</h1>
+      <form id="unlock-form" autocomplete="off">
+        <label>סיסמה</label>
+        <input id="un-pw" type="password" autocomplete="current-password" required autofocus>
+        <div id="unlock-error" class="note bad" hidden></div>
+        <div class="actions"><button class="primary" type="submit" id="un-btn">פתיחה</button></div>
+      </form>
+      <p class="small"><button class="link" id="un-forgot" type="button">שכחתי את הסיסמה — שימוש במפתח שחזור</button></p>
+      <p class="small"><button class="link" id="un-import" type="button">שחזור מקובץ גיבוי מוצפן</button></p>
+    </div>
+  </section>
+
+  <section id="view-main" hidden>
+    <header class="top"><div class="wrap">
+      <span class="brand">יומן טיפולים</span>
+      <nav>
+        <button data-nav="patients">מטופלים</button>
+        <button data-nav="journal">יומן פגישות</button>
+        <button data-nav="settings">הגדרות ואבטחה</button>
+        <button data-nav="guide">מדריך ציות</button>
+      </nav>
+      <span class="spacer"></span>
+      <span id="save-status"></span>
+      <button id="lock-btn" class="primary" title="נעילה (המידע נשאר מוצפן)">🔒 נעילה</button>
+    </div></header>
+    <div class="wrap">
+      <div id="banner"></div>
+      <main id="main"></main>
+    </div>
+  </section>
+</div>
+
+<div id="print-area"></div>
+<dialog id="modal"></dialog>
+
+<template id="tpl-guide">
+<div class="card guide">
+  <h2>מדריך ציות — מה החוק דורש ואיך הכלי עונה על כך</h2>
+  <p class="note warn small">זהו סיכום לצורכי עבודה ולא ייעוץ משפטי. מומלץ לאמת מול הסתדרות הפסיכולוגים / יועץ משפטי, במיוחד לאחר תיקון 13 לחוק הגנת הפרטיות (בתוקף מאוגוסט 2025).</p>
+
+  <h3>1. חובת התיעוד — חוק זכויות החולה, התשנ"ו-1996, סעיף 17</h3>
+  <ul>
+    <li>המטפל חייב לתעד את מהלך הטיפול ברשומה רפואית.</li>
+    <li>הרשומה תכלול, בין היתר: <strong>פרטים מזהים של המטופל ושל המטפל</strong>, <strong>מידע רפואי על הטיפול שניתן</strong>, <strong>עברו הרפואי כפי שמסר</strong>, <strong>אבחון מצבו הנוכחי</strong> ו<strong>הוראות טיפול</strong>.</li>
+    <li><strong>תרשומת אישית של המטפל אינה חלק מהרשומה הרפואית.</strong> בכלי היא נשמרת בשדה נפרד (סגול) ואינה נכללת בהדפסת הרשומה.</li>
+    <li>המטפל אחראי לניהול שוטף ועדכני של הרשומה ולשמירתה (סעיף 17(ב)).</li>
+  </ul>
+  <p class="small muted">בכלי: כרטיס קליטה (פרטים מזהים, עבר רפואי, הערכה ראשונית, תוכנית טיפול) ורישום לכל פגישה (מהלך, הערכת מצב נוכחי, הוראות טיפול/המשך). לא ניתן לחתום על פגישה שהתקיימה בלי שדות החובה. פרטי המטפל ומספר הרישיון נכנסים לכל חתימה.</p>
+
+  <h3>2. שלמות הרשומה — אין מחיקה ואין שכתוב</h3>
+  <ul>
+    <li>לאחר "חתימה" הרישום ננעל. תיקון נעשה רק כ<strong>תוספת/תיקון</strong> עם תאריך, שעה, סיבה ושם המתקן — הנוסח המקורי נשמר (בהתאם לעקרונות חוזר מנכ"ל משרד הבריאות 09/2019 "אמות מידה לניהול רשומת מטופל").</li>
+    <li>שינוי בפרטי הקליטה נשמר בהיסטוריית שינויים.</li>
+    <li>יומן פעולות (audit log) מתעד פתיחה, יצירה, חתימה, תיקון, הדפסה וגיבוי.</li>
+  </ul>
+
+  <h3>3. זכות המטופל לעיין ברשומה — סעיף 18</h3>
+  <ul>
+    <li>מטופל זכאי לקבל מידע מהרשומה הרפואית שלו, כולל העתק. חריג: אם המטפל סבור שהמסירה עלולה לגרום נזק חמור לבריאותו הגופנית או הנפשית — קיים הליך מיוחד (ועדת אתיקה); יש להתייעץ לפני סירוב.</li>
+    <li>בכלי: "הדפסת רשומה" מפיקה את הרשומה הרפואית בלבד (ללא טיוטות וללא תרשומת אישית). ניתן לשמור כ-PDF. <strong>קובץ PDF אינו מוצפן</strong> — יש למסור אותו ישירות ולמחוק עותקים.</li>
+  </ul>
+
+  <h3>4. סודיות — חוק זכויות החולה סעיפים 19–20, חוק הפסיכולוגים התשל"ז-1977 סעיף 7</h3>
+  <ul>
+    <li>פסיכולוג חייב לשמור בסוד כל מידע שהגיע אליו במסגרת עיסוקו, ומוסר מידע רק בהסכמת המטופל או בנסיבות שקבע החוק.</li>
+    <li>בכלי: שדה "הסכמות" בכרטיס הקליטה לתיעוד הסכמה מדעת, הסבר על ניהול הרשומה (כנדרש בקוד האתיקה) וויתורי סודיות.</li>
+  </ul>
+
+  <h3>5. תקופת שמירה</h3>
+  <ul>
+    <li>קוד האתיקה של הסתדרות הפסיכולוגים (2017): לפחות <strong>7 שנים ממועד הרישום האחרון</strong>; לגבי קטינים — לפחות <strong>עד גיל 25</strong>.</li>
+    <li>תקופת ההתיישנות האזרחית הכללית היא 7 שנים (ולקטין נמנית מגיל 18) — ולכן אותן תקופות. יש שממליצים לשמור אף יותר.</li>
+    <li>בכלי: לכל תיק מוצג "לשמור לפחות עד", ומחיקת תיק חסומה לפני המועד.</li>
+  </ul>
+
+  <h3>6. אבטחת מידע — חוק הגנת הפרטיות התשמ"א-1981 (כולל תיקון 13) ותקנות אבטחת מידע התשע"ז-2017</h3>
+  <ul>
+    <li>מידע רפואי ונפשי הוא "מידע בעל רגישות מיוחדת". מאגר של מטפלת עצמאית שרק היא (ועד שני בעלי הרשאה נוספים) משתמשת בו הוא "מאגר המנוהל בידי יחיד" — המסלול המקל בתקנות, אך עדיין נדרש: מסמך הגדרות מאגר, אבטחה פיזית, ניהול הרשאות, תיעוד אירועי אבטחה, הגבלת שימוש בהתקנים ניידים ותקשורת מאובטחת.</li>
+    <li>מה הכלי עושה: הצפנת AES-256-GCM של כל המידע; מפתח נגזר מהסיסמה (PBKDF2-SHA256, 600,000 סבבים); אין שום תקשורת רשת (חסימה ברמת הדפדפן); נעילה אוטומטית אחרי חוסר פעילות; גיבוי מוצפן בלבד; יומן פעולות ויומן אירועי אבטחה; ספירת ניסיונות כניסה כושלים.</li>
+  </ul>
+
+  <h3>7. מה נשאר באחריותך (הכלי לא יכול לעשות זאת במקומך)</h3>
+  <ul>
+    <li><strong>המחשב:</strong> סיסמת כניסה ל-Windows/Mac, הצפנת דיסק (BitLocker / FileVault) פעילה, עדכוני אבטחה אוטומטיים, אנטי-וירוס. לא לשתף את המשתמש במחשב עם בני משפחה.</li>
+    <li><strong>הדפדפן:</strong> פרופיל דפדפן נפרד לעבודה ללא תוספים (extensions) — תוסף יכול לקרוא כל מה שמוצג במסך. לא להשתמש במצב גלישה בסתר (המידע יימחק). לכבות "בדיקת איות משופרת" שנשלחת לענן.</li>
+    <li><strong>גיבוי:</strong> לפחות פעם בשבוע "ייצוא גיבוי מוצפן" לדיסק-און-קי ייעודי שנשמר במקום נעול. מחיקת נתוני הדפדפן / החלפת מחשב ללא גיבוי = אובדן הרשומות (וזו הפרה של חובת השמירה).</li>
+    <li><strong>מפתח השחזור:</strong> על נייר, במקום נעול, בנפרד מהמחשב ומהגיבוי.</li>
+    <li><strong>אירוע אבטחה</strong> (אובדן/גניבת מחשב או דיסק-און-קי, חשד לפריצה): לתעד ב"יומן אירועי אבטחה" בהגדרות. באירוע חמור — לבחון חובת דיווח לרשות להגנת הפרטיות.</li>
+    <li><strong>מסמך הגדרות מאגר</strong> (דרישת התקנות): בהגדרות יש כפתור שמפיק טיוטה מוכנה להדפסה.</li>
+  </ul>
+</div>
+</template>
+
+<script>
+'use strict';
+(() => {
+const enc = new TextEncoder(), dec = new TextDecoder();
+const KDF_ITER = 600000;
+const AAD = enc.encode('therapist-diary/v1');
+const FORMAT = 'therapist-diary-vault';
+const $ = (s, r = document) => r.querySelector(s);
+
+/* ---------- DOM helper: never uses innerHTML, all text goes through textContent ---------- */
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const c of kids.flat(Infinity)) if (c != null && c !== false) el.append(c instanceof Node ? c : String(c));
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'value') el.value = v;
+    else if (k === 'checked') el.checked = !!v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  return el;
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- storage (IndexedDB) ---------- */
+let dbp;
+function db() {
+  return dbp ||= new Promise((res, rej) => {
+    const r = indexedDB.open('therapist-diary', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function kvGet(k) {
+  const d = await db();
+  return new Promise((res, rej) => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+}
+async function kvSet(k, v) {
+  const d = await db();
+  return new Promise((res, rej) => { const tx = d.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(); tx.onerror = tx.onabort = () => rej(tx.error); });
+}
+
+/* ---------- crypto ---------- */
+const rand = n => crypto.getRandomValues(new Uint8Array(n));
+function b64e(buf) { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+function b64d(s) { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+async function deriveKek(secret, salt, iter) {
+  const base = await crypto.subtle.importKey('raw', enc.encode(secret.normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['wrapKey', 'unwrapKey']);
+}
+async function wrapDek(dek, secret) {
+  const salt = rand(16), iv = rand(12);
+  const kek = await deriveKek(secret, salt, KDF_ITER);
+  const ct = await crypto.subtle.wrapKey('raw', dek, kek, { name: 'AES-GCM', iv, additionalData: AAD });
+  return { salt: b64e(salt), iv: b64e(iv), ct: b64e(ct), iter: KDF_ITER };
+}
+async function unwrapDek(w, secret) {
+  const kek = await deriveKek(secret, b64d(w.salt), w.iter || KDF_ITER);
+  return crypto.subtle.unwrapKey('raw', b64d(w.ct), kek, { name: 'AES-GCM', iv: b64d(w.iv), additionalData: AAD }, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+}
+async function encData(key, obj) {
+  const iv = rand(12);
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: AAD }, key, enc.encode(JSON.stringify(obj)));
+  return { iv: b64e(iv), ct: b64e(ct) };
+}
+async function decData(key, d) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(d.iv), additionalData: AAD }, key, b64d(d.ct));
+  return JSON.parse(dec.decode(pt));
+}
+const RK_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function newRecoveryKey() {
+  const s = Array.from(rand(25), b => RK_ALPHABET[b % 32]).join('');
+  return s.match(/.{5}/g).join('-');
+}
+const normRk = s => String(s).toUpperCase().replace(/[^A-Z0-9]/g, '');
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : b64e(rand(16)).replace(/[^a-z0-9]/gi, ''));
+
+/* ---------- dates & formatting ---------- */
+const pad = n => String(n).padStart(2, '0');
+const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => isoDate(new Date());
+const nowTs = () => new Date().toISOString();
+const fmtDate = s => { if (!s) return '—'; const [y, m, d] = s.slice(0, 10).split('-'); return `${d}/${m}/${y}`; };
+const fmtTs = s => s ? new Date(s).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+function addYears(s, n) { const d = new Date(s.slice(0, 10) + 'T00:00:00'); d.setFullYear(d.getFullYear() + n); return isoDate(d); }
+function ageOf(dob) {
+  if (!dob) return null; const b = new Date(dob + 'T00:00:00'), t = new Date();
+  let a = t.getFullYear() - b.getFullYear(); if (t < new Date(t.getFullYear(), b.getMonth(), b.getDate())) a--; return a;
+}
+function validIsraeliId(id) {
+  id = String(id || '').trim(); if (!/^\d{5,9}$/.test(id)) return false; id = id.padStart(9, '0');
+  let s = 0; for (let i = 0; i < 9; i++) { let n = Number(id[i]) * ((i % 2) + 1); if (n > 9) n -= 9; s += n; } return s % 10 === 0;
+}
+const fullName = p => `${p.firstName || ''} ${p.lastName || ''}`.trim() || '(ללא שם)';
+
+/* ---------- app state ---------- */
+let vault = null;   // encrypted record as stored in IndexedDB
+let dek = null;     // data-encryption key (memory only while unlocked)
+let S = null;       // decrypted state (memory only while unlocked)
+let route = { name: 'patients' };
+let dirty = false;  // unsaved form changes
+let flushForm = null; // saves the open form as a draft before auto-lock
+let idleTimer = null;
+let failedNotice = null; // failed-login warning shown once after unlocking
+const bc = 'BroadcastChannel' in window ? new BroadcastChannel('therapist-diary') : null;
+
+function emptyState(name, license) {
+  return {
+    v: 1, createdAt: nowTs(), nextFileNo: 1,
+    settings: { name, license, title: 'פסיכולוג/ית', address: '', phone: '', autoLockMin: 10 },
+    patients: [], sessions: [], audit: [], incidents: [], lastBackup: null
+  };
+}
+function audit(a) { S.audit.push({ at: nowTs(), a }); if (S.audit.length > 5000) S.audit.splice(0, S.audit.length - 5000); }
+
+let saving = Promise.resolve();
+function persist() {
+  saving = saving.then(async () => {
+    setStatus('שומר…');
+    vault.data = await encData(dek, S);
+    vault.savedAt = nowTs();
+    await kvSet('vault', vault);
+    setStatus('נשמר ✓ ' + new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }));
+  }).catch(e => { setStatus('שגיאה בשמירה!'); alert('שגיאה בשמירת המידע: ' + e.message); });
+  return saving;
+}
+function setStatus(t) { const el = $('#save-status'); if (el) el.textContent = t; }
+
+function show(id) { for (const s of document.querySelectorAll('#app > section')) s.hidden = s.id !== id; }
+
+/* ---------- modal ---------- */
+function modal(title, body, actions) {
+  const d = $('#modal');
+  return new Promise(res => {
+    let done = false;
+    const finish = v => { if (done) return; done = true; if (d.open) d.close(); res(v); };
+    d.replaceChildren(
+      h('h3', null, title), ...[].concat(body || []),
+      h('div', { class: 'actions' }, actions.map(a => h('button', {
+        type: 'button', class: a.cls || '',
+        onclick: async () => { if (a.check && !(await a.check())) return; finish(a.value); }
+      }, a.label)))
+    );
+    d.onclose = () => finish(null);
+    d.showModal();
+    const f = d.querySelector('input,textarea'); if (f) f.focus();
+  });
+}
+const confirmBox = (title, text, okLabel = 'אישור', cls = 'primary') =>
+  modal(title, h('p', null, text), [{ label: okLabel, value: true, cls }, { label: 'ביטול', value: false }]);
+async function askPassword(title, text) {
+  const inp = h('input', { type: 'password', autocomplete: 'off' });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#modal .actions button').click(); } });
+  const r = await modal(title, [text ? h('p', { class: 'small' }, text) : null, inp], [{ label: 'אישור', value: 'ok', cls: 'primary' }, { label: 'ביטול', value: null }]);
+  return r ? inp.value : null;
+}
+
+/* ---------- boot ---------- */
+async function boot() {
+  if (!window.crypto?.subtle || !window.indexedDB) return show('view-nosupport');
+  try { vault = await kvGet('vault'); } catch { return show('view-nosupport'); }
+  if (!vault) { show('view-setup'); $('#su-name').focus(); }
+  else { show('view-unlock'); $('#un-pw').focus(); }
+}
+
+/* ---------- setup ---------- */
+let pendingSetup = null;
+$('#setup-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const err = $('#setup-error'); err.hidden = true;
+  const name = $('#su-name').value.trim(), license = $('#su-license').value.trim();
+  const pw = $('#su-pw').value, pw2 = $('#su-pw2').value;
+  const fail = m => { err.textContent = m; err.hidden = false; };
+  if (!name || !license) return fail('יש למלא שם ומספר רישיון.');
+  if (pw.length < 12) return fail('הסיסמה חייבת להכיל לפחות 12 תווים.');
+  if (pw !== pw2) return fail('הסיסמאות אינן תואמות.');
+  pendingSetup = { name, license, pw, rk: newRecoveryKey() };
+  $('#setup-form').hidden = true;
+  $('#setup-rk-value').textContent = pendingSetup.rk;
+  $('#setup-rk').hidden = false;
+});
+$('#setup-rk-ok').addEventListener('change', e => { $('#setup-finish').disabled = !e.target.checked; });
+$('#setup-finish').addEventListener('click', async () => {
+  const b = $('#setup-finish'); b.disabled = true; b.textContent = 'מצפין…';
+  const { name, license, pw, rk } = pendingSetup; pendingSetup = null;
+  dek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  S = emptyState(name, license);
+  audit('יצירת יומן מוצפן');
+  vault = { format: FORMAT, v: 1, createdAt: nowTs(), pw: await wrapDek(dek, pw), rk: await wrapDek(dek, normRk(rk)) };
+  await persist();
+  $('#su-pw').value = $('#su-pw2').value = '';
+  enterApp();
+});
+$('#setup-import').addEventListener('click', importBackup);
+
+/* ---------- unlock ---------- */
+$('#unlock-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#un-btn'), err = $('#unlock-error'); err.hidden = true;
+  const pw = $('#un-pw').value; if (!pw) return;
+  btn.disabled = true; btn.textContent = 'פותח…';
+  bc?.postMessage('lock-others');
+  try {
+    const stored = await kvGet('vault');
+    const key = await unwrapDek(stored.pw, pw);
+    await openWith(key);
+  } catch {
+    const f = (await kvGet('failed')) || { count: 0 };
+    f.count++; f.last = nowTs(); await kvSet('failed', f);
+    await sleep(Math.min(1000 * f.count, 15000));
+    err.textContent = 'סיסמה שגויה.'; err.hidden = false;
+    btn.disabled = false; btn.textContent = 'פתיחה';
+    $('#un-pw').select();
+  }
+});
+async function openWith(key) {
+  vault = await kvGet('vault');   // re-read: another tab may have just saved
+  const data = await decData(key, vault.data);
+  dek = key; S = data;
+  const f = await kvGet('failed');
+  if (f?.count) { audit(`${f.count} ניסיונות כניסה כושלים מאז הכניסה הקודמת (אחרון: ${fmtTs(f.last)})`); await kvSet('failed', { count: 0 }); failedNotice = f; }
+  audit('פתיחת היומן');
+  $('#un-pw').value = '';
+  await persist();
+  enterApp();
+}
+$('#un-forgot').addEventListener('click', async () => {
+  const rk = h('input', { autocomplete: 'off', dir: 'ltr', placeholder: 'XXXXX-XXXXX-XXXXX-XXXXX-XXXXX' });
+  const p1 = h('input', { type: 'password', autocomplete: 'new-password' }), p2 = h('input', { type: 'password', autocomplete: 'new-password' });
+  const err = h('div', { class: 'note bad', hidden: true });
+  let key = null;
+  const r = await modal('איפוס סיסמה בעזרת מפתח שחזור', [
+    h('label', null, 'מפתח שחזור'), rk, h('label', null, 'סיסמה חדשה (12 תווים לפחות)'), p1, h('label', null, 'אימות סיסמה חדשה'), p2, err
+  ], [{ label: 'איפוס ופתיחה', value: true, cls: 'primary', check: async () => {
+      err.hidden = true;
+      if (p1.value.length < 12 || p1.value !== p2.value) { err.textContent = 'הסיסמה קצרה מדי או שהאימות אינו תואם.'; err.hidden = false; return false; }
+      try { key = await unwrapDek((await kvGet('vault')).rk, normRk(rk.value)); return true; }
+      catch { err.textContent = 'מפתח השחזור שגוי.'; err.hidden = false; return false; }
+    } }, { label: 'ביטול', value: false }]);
+  if (!r || !key) return;
+  const v = await kvGet('vault'); v.pw = await wrapDek(key, p1.value); await kvSet('vault', v);
+  await openWith(key);
+  audit('איפוס סיסמה באמצעות מפתח שחזור'); persist();
+});
+$('#un-import').addEventListener('click', importBackup);
+
+/* ---------- lock / idle / multi-tab ---------- */
+async function lock(reason) {
+  if (!S) return;
+  try { if (flushForm) await flushForm(); } catch {}
+  audit(reason || 'נעילה'); await persist(); await saving;
+  S = null; dek = null;
+  location.reload(); // wipes every decrypted value from memory and the DOM
+}
+function resetIdle() {
+  if (!S) return;
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => lock('נעילה אוטומטית עקב חוסר פעילות'), (Number(S.settings.autoLockMin) || 10) * 60000);
+}
+['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, resetIdle, { passive: true }));
+if (bc) bc.onmessage = e => { if (e.data === 'lock-others' && S) lock('נעילה — היומן נפתח בלשונית אחרת'); };
+$('#lock-btn').addEventListener('click', () => lock());
+addEventListener('beforeunload', e => { if (S && dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- main app / routing ---------- */
+function enterApp() {
+  show('view-main');
+  navigator.storage?.persist?.().catch(() => {});
+  resetIdle();
+  nav({ name: 'patients' }, true);
+}
+document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => nav({ name: b.dataset.nav })));
+async function nav(r, force) {
+  if (!force && dirty && !(await confirmBox('יש שינויים שלא נשמרו', 'לצאת מהטופס בלי לשמור?', 'יציאה בלי שמירה', 'danger'))) return;
+  dirty = false; flushForm = null; route = r; render();
+}
+function render() {
+  document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('active',
+    b.dataset.nav === route.name || (b.dataset.nav === 'patients' && /^patient|^session/.test(route.name))));
+  renderBanner();
+  const views = { patients: viewPatients, patient: viewPatient, patientEdit: viewPatientEdit, session: viewSession, journal: viewJournal, settings: viewSettings, guide: viewGuide };
+  $('#main').replaceChildren(...[].concat(views[route.name]()));
+  scrollTo(0, 0);
+}
+function renderBanner() {
+  const out = [];
+  if (failedNotice) {
+    out.push(h('div', { class: 'note bad' }, `שימי לב: היו ${failedNotice.count} ניסיונות כניסה כושלים מאז הכניסה הקודמת (האחרון ב-${fmtTs(failedNotice.last)}). אם זו לא את — תעדי זאת ב"יומן אירועי אבטחה".`,
+      ' ', h('button', { class: 'link', onclick: () => { failedNotice = null; renderBanner(); } }, 'הבנתי')));
+  }
+  const days = S.lastBackup ? Math.floor((Date.now() - new Date(S.lastBackup)) / 864e5) : null;
+  if (S.sessions.length && (days === null || days >= 7)) {
+    out.push(h('div', { class: 'note warn' }, days === null ? 'עדיין לא בוצע גיבוי מוצפן. ' : `הגיבוי המוצפן האחרון בוצע לפני ${days} ימים. `,
+      h('button', { class: 'link', onclick: exportBackup }, 'גיבוי עכשיו')));
+  }
+  const drafts = S.sessions.filter(s => s.status !== 'signed').length;
+  if (drafts) out.push(h('div', { class: 'note info small' }, `יש ${drafts} רישומי פגישה בטיוטה שטרם נחתמו. `, h('button', { class: 'link', onclick: () => nav({ name: 'journal' }) }, 'לצפייה')));
+  $('#banner').replaceChildren(...out);
+}
+
+/* ---------- generic form builder ---------- */
+function buildForm(defs, obj, opts = {}) {
+  const getters = {}, nodes = [];
+  let grid = h('div', { class: 'grid2' });
+  const flush = () => { if (grid.childNodes.length) nodes.push(grid); grid = h('div', { class: 'grid2' }); };
+  for (const d of defs) {
+    if (d.section) { flush(); nodes.push(h('div', { class: 'section-title ' + (d.cls || '') }, d.section)); if (d.hint) nodes.push(h('p', { class: 'small muted' }, d.hint)); continue; }
+    const v = obj[d.k] ?? '';
+    let input;
+    const common = { spellcheck: 'false', autocomplete: 'off', oninput: () => { dirty = true; }, onchange: () => { dirty = true; } };
+    if (d.t === 'textarea') input = h('textarea', { ...common, value: v, rows: d.rows || 4 });
+    else if (d.t === 'select') input = h('select', { ...common, value: v }, d.o.map(o => Array.isArray(o) ? h('option', { value: o[0] }, o[1]) : h('option', { value: o }, o || '—')));
+    else if (d.t === 'check') input = h('input', { ...common, type: 'checkbox', checked: !!v });
+    else input = h('input', { ...common, type: d.t || 'text', value: v, min: d.min, dir: d.dir });
+    getters[d.k] = () => d.t === 'check' ? input.checked : d.t === 'number' ? (input.value === '' ? '' : Number(input.value)) : input.value.trim();
+    const lbl = d.t === 'check'
+      ? h('label', { class: 'inline' }, input, d.l)
+      : h('label', null, d.l, d.req ? h('span', { class: 'req' }, ' *') : null);
+    const wrapper = h('div', { class: d.t === 'textarea' || d.full ? 'full' : '' }, lbl, d.t === 'check' ? null : input, d.hint ? h('div', { class: 'small muted' }, d.hint) : null);
+    (d.personal ? (opts.personalWrap ||= h('div', { class: 'personal-wrap full' })) : grid).append(wrapper);
+    if (d.personal && !grid.contains(opts.personalWrap)) grid.append(opts.personalWrap);
+  }
+  flush();
+  return { nodes, values: () => Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()])) };
+}
+function kvList(defs, obj) {
+  const dl = h('dl', { class: 'kv' });
+  for (const d of defs) {
+    if (d.section || d.personal) continue;
+    let v = obj[d.k];
+    if (d.t === 'check') v = v ? 'כן' : 'לא';
+    else if (d.t === 'date') v = v ? fmtDate(v) : '';
+    else if (d.t === 'select' && Array.isArray(d.o[0])) v = (d.o.find(o => o[0] === v) || [, v])[1];
+    if (v === '' || v == null) continue;
+    dl.append(h('dt', null, d.l), h('dd', null, String(v)));
+  }
+  return dl;
+}
+
+/* ---------- patients ---------- */
+const PATIENT_FIELDS = [
+  { section: 'פרטים מזהים', hint: 'חובה לפי סעיף 17 לחוק זכויות החולה.' },
+  { k: 'firstName', l: 'שם פרטי', req: true },
+  { k: 'lastName', l: 'שם משפחה', req: true },
+  { k: 'idNumber', l: 'מספר תעודת זהות / דרכון', req: true },
+  { k: 'dob', l: 'תאריך לידה', t: 'date', req: true },
+  { k: 'gender', l: 'מגדר', t: 'select', o: ['', 'אישה', 'גבר', 'אחר'] },
+  { k: 'phone', l: 'טלפון', dir: 'ltr' },
+  { k: 'email', l: 'דוא"ל', t: 'email', dir: 'ltr' },
+  { k: 'address', l: 'כתובת' },
+  { k: 'emergency', l: 'איש קשר לחירום (שם, קרבה, טלפון)' },
+  { k: 'guardian', l: 'הורה / אפוטרופוס (לקטין או חסוי)' },
+  { section: 'קליטה' },
+  { k: 'intakeDate', l: 'תאריך פתיחת התיק', t: 'date', req: true },
+  { k: 'referral', l: 'גורם מפנה' },
+  { k: 'reason', l: 'סיבת הפנייה / התלונה העיקרית', t: 'textarea', req: true },
+  { k: 'history', l: 'עבר רפואי ונפשי כפי שמסר המטופל (אשפוזים, טיפולים קודמים, מחלות)', t: 'textarea', req: true },
+  { k: 'medications', l: 'תרופות נוכחיות', t: 'textarea', rows: 2 },
+  { k: 'otherCare', l: 'גורמים מטפלים נוספים (רופא משפחה, פסיכיאטר)', t: 'textarea', rows: 2 },
+  { k: 'initialAssessment', l: 'הערכה / אבחנה ראשונית', t: 'textarea', req: true },
+  { k: 'treatmentPlan', l: 'תוכנית טיפול (מטרות, שיטה, תדירות)', t: 'textarea', req: true },
+  { section: 'הסכמות' },
+  { k: 'consentTreatment', l: 'המטופל נתן הסכמה מדעת לטיפול', t: 'check', full: true },
+  { k: 'consentRecords', l: 'הוסבר למטופל כיצד מתנהלת הרשומה, תנאי שמירתה וזכותו לעיין בה', t: 'check', full: true },
+  { k: 'consentDate', l: 'תאריך ההסכמה', t: 'date' },
+  { k: 'consentNotes', l: 'ויתורי סודיות / הסכמה לפנות לגורם אחר / הערות', t: 'textarea', rows: 2 },
+];
+const PATIENT_REQUIRED = PATIENT_FIELDS.filter(d => d.req);
+const patientById = id => S.patients.find(p => p.id === id);
+const sessionsOf = pid => S.sessions.filter(s => s.patientId === pid).sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+
+function patientGaps(p) {
+  const g = PATIENT_REQUIRED.filter(d => !p[d.k]).map(d => d.l);
+  if (!p.consentTreatment) g.push('תיעוד הסכמה מדעת לטיפול');
+  if (!p.consentRecords) g.push('תיעוד הסבר על ניהול הרשומה');
+  if (p.idNumber && /^\d+$/.test(p.idNumber) && !validIsraeliId(p.idNumber)) g.push('מספר ת"ז אינו תקין (ספרת ביקורת)');
+  return g;
+}
+function retention(p) {
+  const dates = [p.intakeDate, p.closedAt, p.createdAt?.slice(0, 10), ...sessionsOf(p.id).map(s => s.date)].filter(Boolean).sort();
+  const last = dates[dates.length - 1] || today();
+  let until = addYears(last, 7), why = '7 שנים ממועד הרישום האחרון';
+  if (p.dob) { const at25 = addYears(p.dob, 25); if (at25 > until) { until = at25; why = 'עד גיל 25 — טופל/ה כקטין/ה'; } }
+  return { until, why, last };
+}
+
+function viewPatients() {
+  const q = h('input', { type: 'search', placeholder: 'חיפוש לפי שם, ת"ז או מספר תיק', spellcheck: 'false', autocomplete: 'off' });
+  const st = h('select', null, h('option', { value: 'active' }, 'תיקים פעילים'), h('option', { value: 'closed' }, 'תיקים סגורים'), h('option', { value: 'all' }, 'הכול'));
+  const list = h('div', { class: 'list' });
+  const draw = () => {
+    const t = q.value.trim().toLowerCase();
+    const items = S.patients
+      .filter(p => st.value === 'all' || (p.status || 'active') === st.value)
+      .filter(p => !t || `${fullName(p)} ${p.idNumber || ''} ${p.fileNo}`.toLowerCase().includes(t))
+      .sort((a, b) => fullName(a).localeCompare(fullName(b), 'he'));
+    list.replaceChildren(...(items.length ? items.map(p => {
+      const ss = sessionsOf(p.id), last = ss[ss.length - 1];
+      const gaps = patientGaps(p).length;
+      return h('button', { class: 'row', onclick: () => nav({ name: 'patient', id: p.id }) },
+        h('span', { class: 'grow' }, h('strong', null, fullName(p)), ' ', h('span', { class: 'muted small' }, `· תיק ${p.fileNo}`)),
+        gaps ? h('span', { class: 'badge warn' }, 'חסרים פרטים') : null,
+        p.status === 'closed' ? h('span', { class: 'badge' }, 'סגור') : null,
+        h('span', { class: 'muted small' }, last ? `פגישה אחרונה ${fmtDate(last.date)}` : 'אין פגישות'));
+    }) : [h('p', { class: 'muted' }, S.patients.length ? 'לא נמצאו תוצאות.' : 'עדיין אין מטופלים. לחצי "מטופל חדש" כדי להתחיל.')]));
+  };
+  q.addEventListener('input', draw); st.addEventListener('change', draw); draw();
+  return h('div', { class: 'card' },
+    h('div', { class: 'toolbar' }, h('h2', null, 'מטופלים'), h('button', { class: 'primary', onclick: () => nav({ name: 'patientEdit' }) }, '+ מטופל חדש')),
+    h('div', { class: 'filters' }, q, st), list);
+}
+
+function viewPatientEdit() {
+  const p = route.id ? patientById(route.id) : { intakeDate: today() };
+  const f = buildForm(PATIENT_FIELDS, p);
+  const err = h('div', { class: 'note bad', hidden: true });
+  const save = () => {
+    const v = f.values();
+    if (!v.firstName || !v.lastName) { err.textContent = 'יש למלא לפחות שם פרטי ושם משפחה.'; err.hidden = false; return; }
+    if (route.id) {
+      p.changes ||= [];
+      for (const d of PATIENT_FIELDS) if (d.k && (p[d.k] ?? '') !== '' && p[d.k] !== v[d.k]) p.changes.push({ at: nowTs(), field: d.l, old: typeof p[d.k] === 'boolean' ? (p[d.k] ? 'כן' : 'לא') : p[d.k] });
+      Object.assign(p, v, { updatedAt: nowTs() });
+      audit(`עדכון פרטי תיק ${p.fileNo}`);
+    } else {
+      const np = { id: uid(), fileNo: S.nextFileNo++, status: 'active', createdAt: nowTs(), ...v };
+      S.patients.push(np); route.id = np.id; audit(`פתיחת תיק ${np.fileNo}`);
+    }
+    dirty = false; persist(); nav({ name: 'patient', id: route.id }, true);
+  };
+  return h('div', { class: 'card' },
+    h('h2', null, route.id ? `עריכת פרטי ${fullName(p)}` : 'מטופל חדש'),
+    route.id ? h('p', { class: 'small muted' }, 'שינויים בשדות קיימים נשמרים בהיסטוריית השינויים של התיק.') : null,
+    f.nodes, err,
+    h('div', { class: 'actions' }, h('button', { class: 'primary', onclick: save }, 'שמירה'),
+      h('button', { onclick: () => nav(route.id ? { name: 'patient', id: route.id } : { name: 'patients' }) }, 'ביטול')));
+}
+
+function viewPatient() {
+  const p = patientById(route.id);
+  if (!p) return h('p', null, 'התיק לא נמצא.');
+  const ss = sessionsOf(p.id), gaps = patientGaps(p), ret = retention(p), age = ageOf(p.dob);
+  const canDelete = p.status === 'closed' && today() > ret.until;
+  return [
+    h('div', { class: 'card' },
+      h('div', { class: 'toolbar' },
+        h('h2', null, fullName(p), ' ', h('span', { class: 'muted small' }, `· תיק ${p.fileNo}${age != null ? ` · גיל ${age}` : ''}`),
+          ' ', p.status === 'closed' ? h('span', { class: 'badge' }, `סגור מ-${fmtDate(p.closedAt)}`) : h('span', { class: 'badge ok' }, 'פעיל')),
+        h('button', { class: 'link', onclick: () => nav({ name: 'patients' }) }, 'חזרה לרשימה ←')),
+      gaps.length ? h('div', { class: 'note warn small' }, 'חסרים פרטים הנדרשים לרשומה תקינה:', h('ul', null, gaps.map(g => h('li', null, g)))) : h('div', { class: 'note ok small' }, 'כרטיס הקליטה שלם.'),
+      h('div', { class: 'actions' },
+        p.status !== 'closed' ? h('button', { class: 'primary', onclick: () => newSession(p) }, '+ תיעוד פגישה') : null,
+        h('button', { onclick: () => nav({ name: 'patientEdit', id: p.id }) }, 'עריכת פרטים'),
+        h('button', { onclick: () => printRecord(p) }, 'הדפסת רשומה / PDF'),
+        p.status !== 'closed' ? h('button', { onclick: () => closeFile(p) }, 'סגירת תיק') : h('button', { onclick: () => reopenFile(p) }, 'פתיחה מחדש'),
+        h('button', { class: 'danger', disabled: !canDelete, title: canDelete ? '' : 'ניתן למחוק רק תיק סגור שתקופת השמירה שלו הסתיימה', onclick: () => deletePatient(p) }, 'מחיקת תיק')),
+      h('p', { class: 'small muted' }, `חובת שמירה: לפחות עד ${fmtDate(ret.until)} (${ret.why}).`)),
+    h('div', { class: 'card' }, h('h3', null, `פגישות (${ss.length})`),
+      ss.length ? h('div', { class: 'list' }, [...ss].reverse().map(s => sessionRow(s))) : h('p', { class: 'muted' }, 'עדיין לא תועדו פגישות.')),
+    h('div', { class: 'card' }, h('h3', null, 'כרטיס קליטה'), kvList(PATIENT_FIELDS, p),
+      p.closingSummary ? [h('h3', null, 'סיכום סיום טיפול'), h('p', { class: 'pre' }, p.closingSummary)] : null,
+      p.changes?.length ? h('details', null, h('summary', null, `היסטוריית שינויים (${p.changes.length})`),
+        h('table', { class: 'log' }, h('tr', null, h('th', null, 'מועד'), h('th', null, 'שדה'), h('th', null, 'ערך קודם')),
+          [...p.changes].reverse().map(c => h('tr', null, h('td', null, fmtTs(c.at)), h('td', null, c.field), h('td', { class: 'pre' }, String(c.old)))))) : null)
+  ];
+}
+const ATT = { attended: 'התקיימה', noshow: 'לא הגיע/ה', cancelled: 'בוטלה' };
+function sessionRow(s, withName) {
+  const p = patientById(s.patientId);
+  return h('button', { class: 'row', onclick: () => nav({ name: 'session', id: s.id }) },
+    h('span', { class: 'grow' }, h('strong', null, fmtDate(s.date)), s.time ? ` ${s.time}` : '',
+      withName && p ? h('span', null, ` · ${fullName(p)}`) : null,
+      h('span', { class: 'muted small' }, ` · ${s.type || ''}${s.attendance && s.attendance !== 'attended' ? ' · ' + ATT[s.attendance] : ''}`)),
+    s.amendments?.length ? h('span', { class: 'badge warn' }, `${s.amendments.length} תיקונים`) : null,
+    s.status === 'signed' ? h('span', { class: 'badge ok' }, 'חתום') : h('span', { class: 'badge bad' }, 'טיוטה'));
+}
+async function closeFile(p) {
+  const t = h('textarea', { rows: 5, spellcheck: 'false' });
+  const ok = await modal('סגירת תיק', [h('p', { class: 'small' }, 'סיכום סיום טיפול (סיבת הסיום, מצב המטופל, המלצות להמשך):'), t], [{ label: 'סגירת התיק', value: true, cls: 'primary' }, { label: 'ביטול', value: false }]);
+  if (!ok) return;
+  Object.assign(p, { status: 'closed', closedAt: today(), closingSummary: t.value.trim() || p.closingSummary || '' });
+  audit(`סגירת תיק ${p.fileNo}`); persist(); render();
+}
+function reopenFile(p) { p.status = 'active'; audit(`פתיחה מחדש של תיק ${p.fileNo}`); persist(); render(); }
+async function deletePatient(p) {
+  const inp = h('input', { dir: 'ltr' });
+  const ok = await modal('מחיקה לצמיתות', [h('p', null, `תקופת השמירה של תיק ${p.fileNo} הסתיימה. המחיקה סופית ואינה ניתנת לביטול (גם גיבויים ישנים עדיין יכילו את התיק). להמשך הקלידי את מספר התיק:`), inp],
+    [{ label: 'מחיקה', value: true, cls: 'danger', check: () => inp.value.trim() === String(p.fileNo) }, { label: 'ביטול', value: false }]);
+  if (!ok) return;
+  S.sessions = S.sessions.filter(s => s.patientId !== p.id);
+  S.patients = S.patients.filter(x => x.id !== p.id);
+  audit(`מחיקת תיק ${p.fileNo} לאחר תום תקופת השמירה`); persist(); nav({ name: 'patients' }, true);
+}
+
+/* ---------- sessions ---------- */
+const SESSION_FIELDS = [
+  { k: 'date', l: 'תאריך', t: 'date', req: true },
+  { k: 'time', l: 'שעת התחלה', t: 'time' },
+  { k: 'duration', l: 'משך (דקות)', t: 'number', min: 0 },
+  { k: 'type', l: 'סוג פגישה', t: 'select', o: ['פרטני', 'זוגי', 'משפחתי', 'קבוצתי', 'הדרכת הורים', 'אבחון', 'שיחה טלפונית', 'אחר'] },
+  { k: 'modality', l: 'אופן', t: 'select', o: ['בקליניקה', 'וידאו', 'טלפון', 'ביקור בית'] },
+  { k: 'attendance', l: 'נוכחות', t: 'select', o: [['attended', 'התקיימה'], ['noshow', 'לא הגיע/ה'], ['cancelled', 'בוטלה']] },
+  { k: 'participants', l: 'משתתפים נוספים', full: true },
+  { section: 'תיעוד הפגישה — חלק מהרשומה הרפואית' },
+  { k: 'content', l: 'מהלך הפגישה ומידע שמסר המטופל', t: 'textarea', req: true, rows: 6 },
+  { k: 'observation', l: 'התרשמות / מצב נפשי', t: 'textarea', rows: 3 },
+  { k: 'assessment', l: 'הערכת המצב הנוכחי / אבחנה', t: 'textarea', req: true, rows: 3 },
+  { k: 'interventions', l: 'התערבויות שבוצעו', t: 'textarea', rows: 3 },
+  { k: 'plan', l: 'הוראות טיפול והמשך (משימות, הפניות, מועד הפגישה הבאה)', t: 'textarea', req: true, rows: 3 },
+  { k: 'risk', l: 'הערכת סיכון', t: 'select', o: [['', 'לא הוערך'], ['none', 'לא זוהה סיכון'], ['low', 'נמוך'], ['medium', 'בינוני'], ['high', 'גבוה']] },
+  { k: 'riskNotes', l: 'פירוט הסיכון והצעדים שננקטו', t: 'textarea', rows: 2 },
+  { section: 'תרשומת אישית של המטפל/ת — אינה חלק מהרשומה הרפואית', cls: 'personal', hint: 'סעיף 17(א) לחוק זכויות החולה. נשמרת מוצפנת ואינה נכללת בהדפסת הרשומה. גם עליה חלה חובת סודיות.' },
+  { k: 'personalNote', l: 'רשמים אישיים, השערות, העברה נגדית', t: 'textarea', rows: 4, personal: true },
+];
+const CLINICAL = SESSION_FIELDS.filter(d => d.k && !d.personal);
+function newSession(p) {
+  const last = sessionsOf(p.id).slice(-1)[0];
+  const s = { id: uid(), patientId: p.id, status: 'draft', createdAt: nowTs(), date: today(),
+    time: new Date().toTimeString().slice(0, 5), duration: last?.duration ?? 50, type: last?.type || 'פרטני', modality: last?.modality || 'בקליניקה', attendance: 'attended' };
+  nav({ name: 'session', id: s.id, draft: s }); // stored only once saved
+}
+function signGaps(s) {
+  const g = [];
+  if (!S.settings.name || !S.settings.license) g.push('שם המטפל/ת ומספר רישיון (בהגדרות)');
+  if (!s.date) g.push('תאריך');
+  if (s.attendance === 'attended') for (const d of CLINICAL) if (d.req && !s[d.k]) g.push(d.l);
+  if ((s.risk === 'medium' || s.risk === 'high') && !s.riskNotes) g.push('פירוט הסיכון והצעדים שננקטו');
+  return g;
+}
+function viewSession() {
+  const s = route.draft || S.sessions.find(x => x.id === route.id);
+  if (!s) return h('p', null, 'הרישום לא נמצא.');
+  const p = patientById(s.patientId);
+  const head = h('div', { class: 'toolbar' },
+    h('h2', null, `פגישה · ${fullName(p)}`, ' ', h('span', { class: 'muted small' }, `תיק ${p.fileNo}`)),
+    h('button', { class: 'link', onclick: () => nav({ name: 'patient', id: p.id }) }, 'חזרה לתיק ←'));
+  return s.status === 'signed' ? viewSignedSession(s, p, head) : viewDraftSession(s, p, head);
+}
+function viewDraftSession(s, p, head) {
+  const f = buildForm(SESSION_FIELDS, s);
+  const wasStored = S.sessions.includes(s);
+  const err = h('div', { class: 'note bad', hidden: true });
+  const apply = () => { Object.assign(s, f.values(), { updatedAt: nowTs() }); if (!S.sessions.includes(s)) S.sessions.push(s); };
+  flushForm = async () => { if (dirty) { apply(); audit(`שמירת טיוטה אוטומטית (תיק ${p.fileNo})`); dirty = false; await persist(); } };
+  const saveDraft = () => { apply(); dirty = false; audit(`שמירת טיוטה (תיק ${p.fileNo})`); persist(); nav({ name: 'patient', id: p.id }, true); };
+  const sign = async () => {
+    apply();
+    const g = signGaps(s);
+    if (g.length) { if (!wasStored) S.sessions = S.sessions.filter(x => x !== s); err.replaceChildren('לא ניתן לחתום — חסרים שדות חובה:', h('ul', null, g.map(x => h('li', null, x)))); err.hidden = false; err.scrollIntoView({ block: 'center' }); dirty = true; return; }
+    if (!(await confirmBox('חתימה ונעילה', 'לאחר החתימה לא ניתן לשנות את תוכן הרישום. תיקונים יתועדו כתוספת עם תאריך וסיבה, והנוסח המקורי יישמר.', 'חתימה'))) return;
+    Object.assign(s, { status: 'signed', signedAt: nowTs(), signedBy: { name: S.settings.name, license: S.settings.license, title: S.settings.title } });
+    dirty = false; audit(`חתימה על פגישה מ-${fmtDate(s.date)} (תיק ${p.fileNo})`); persist(); nav({ name: 'session', id: s.id }, true);
+  };
+  const del = async () => {
+    if (!S.sessions.includes(s)) { dirty = false; return nav({ name: 'patient', id: p.id }, true); }
+    if (!(await confirmBox('מחיקת טיוטה', 'למחוק טיוטה זו? (ניתן למחוק רק טיוטות שלא נחתמו)', 'מחיקה', 'danger'))) return;
+    S.sessions = S.sessions.filter(x => x.id !== s.id); dirty = false;
+    audit(`מחיקת טיוטה לא חתומה (תיק ${p.fileNo})`); persist(); nav({ name: 'patient', id: p.id }, true);
+  };
+  return h('div', { class: 'card' }, head,
+    h('p', { class: 'note info small' }, 'טיוטה — ניתן לערוך עד החתימה. רצוי לחתום ביום הפגישה. טיוטה נשמרת אוטומטית אם היומן ננעל.'),
+    f.nodes, err,
+    h('div', { class: 'actions' },
+      h('button', { class: 'primary', onclick: sign }, '✔ חתימה ונעילה'),
+      h('button', { onclick: saveDraft }, 'שמירת טיוטה'),
+      h('button', { class: 'danger', onclick: del }, 'מחיקת טיוטה')));
+}
+function viewSignedSession(s, p, head) {
+  const reason = h('select', null, ['השלמת מידע', 'תיקון טעות', 'הבהרה', 'אחר'].map(o => h('option', null, o)));
+  const text = h('textarea', { rows: 3, spellcheck: 'false', oninput: () => { dirty = !!text.value.trim(); } });
+  const addAmend = () => {
+    if (!text.value.trim()) return;
+    (s.amendments ||= []).push({ id: uid(), at: nowTs(), reason: reason.value, text: text.value.trim(), by: { name: S.settings.name, license: S.settings.license } });
+    dirty = false; audit(`הוספת ${reason.value} לפגישה מ-${fmtDate(s.date)} (תיק ${p.fileNo})`); persist(); render();
+  };
+  flushForm = async () => { if (text.value.trim()) { reason.value = 'אחר'; addAmend(); await saving; } };
+  const pn = h('textarea', { rows: 4, spellcheck: 'false', value: s.personalNote || '', oninput: () => { dirty = true; } });
+  const savePn = () => { s.personalNote = pn.value.trim(); dirty = false; audit(`עדכון תרשומת אישית (תיק ${p.fileNo})`); persist(); setStatus('נשמר ✓'); };
+  return h('div', { class: 'card' }, head,
+    kvList(CLINICAL, s),
+    h('div', { class: 'sig' }, `✔ נחתם דיגיטלית ע"י ${s.signedBy.name}, ${s.signedBy.title || ''} מ.ר. ${s.signedBy.license} · ${fmtTs(s.signedAt)}`),
+    s.amendments?.length ? [h('h3', null, 'תוספות ותיקונים'), s.amendments.map(a => h('div', { class: 'amend' },
+      h('div', { class: 'small' }, h('strong', null, a.reason), ` · ${fmtTs(a.at)} · ${a.by.name} מ.ר. ${a.by.license}`), h('div', { class: 'pre' }, a.text)))] : null,
+    h('h3', null, 'הוספת תיקון / השלמה'),
+    h('p', { class: 'small muted' }, 'הנוסח המקורי אינו משתנה. התוספת נרשמת עם תאריך, שעה, סיבה ושמך.'),
+    h('div', { class: 'grid2' }, h('div', null, h('label', null, 'סוג'), reason), h('div', { class: 'full' }, h('label', null, 'תוכן'), text)),
+    h('div', { class: 'actions' }, h('button', { class: 'primary', onclick: addAmend }, 'הוספה לרשומה')),
+    h('div', { class: 'personal-wrap' },
+      h('div', { class: 'section-title personal' }, 'תרשומת אישית — אינה חלק מהרשומה הרפואית'),
+      pn, h('div', { class: 'actions' }, h('button', { onclick: savePn }, 'שמירת תרשומת אישית'))));
+}
+
+/* ---------- journal ---------- */
+function viewJournal() {
+  const month = h('input', { type: 'month', value: today().slice(0, 7) });
+  const list = h('div', { class: 'list' });
+  const drafts = S.sessions.filter(s => s.status !== 'signed').sort((a, b) => a.date.localeCompare(b.date));
+  const draw = () => {
+    const items = S.sessions.filter(s => !month.value || s.date.startsWith(month.value))
+      .sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+    list.replaceChildren(...(items.length ? items.map(s => sessionRow(s, true)) : [h('p', { class: 'muted' }, 'אין פגישות בחודש זה.')]));
+  };
+  month.addEventListener('change', draw); draw();
+  return [
+    drafts.length ? h('div', { class: 'card' }, h('h3', null, `טיוטות שטרם נחתמו (${drafts.length})`), h('div', { class: 'list' }, drafts.map(s => sessionRow(s, true)))) : null,
+    h('div', { class: 'card' }, h('div', { class: 'toolbar' }, h('h2', null, 'יומן פגישות'), month), list)
+  ].filter(Boolean);
+}
+
+/* ---------- print (patient access request, section 18) ---------- */
+function printRecord(p) {
+  const ss = sessionsOf(p.id), signed = ss.filter(s => s.status === 'signed'), drafts = ss.length - signed.length;
+  const st = S.settings;
+  const area = $('#print-area');
+  area.replaceChildren(
+    h('h1', null, 'רשומה רפואית — העתק'),
+    h('p', null, `מטפל/ת: ${st.name}, ${st.title || ''} · מ.ר. ${st.license}${st.address ? ' · ' + st.address : ''}${st.phone ? ' · ' + st.phone : ''}`),
+    h('p', null, `הופק ב-${fmtTs(nowTs())}`),
+    h('h2', null, `${fullName(p)} · תיק ${p.fileNo}`),
+    kvList(PATIENT_FIELDS, p),
+    p.closingSummary ? [h('h3', null, `סיכום סיום טיפול (${fmtDate(p.closedAt)})`), h('p', { class: 'pre' }, p.closingSummary)] : null,
+    h('h2', null, `תיעוד פגישות (${signed.length})`),
+    signed.map(s => h('div', { class: 'pr-session' },
+      h('h3', null, `${fmtDate(s.date)}${s.time ? ' ' + s.time : ''}`),
+      kvList(CLINICAL.filter(d => d.k !== 'date' && d.k !== 'time'), s),
+      h('div', { class: 'sig' }, `נחתם ע"י ${s.signedBy.name} מ.ר. ${s.signedBy.license} · ${fmtTs(s.signedAt)}`),
+      (s.amendments || []).map(a => h('div', { class: 'amend' }, h('div', null, h('strong', null, a.reason), ` · ${fmtTs(a.at)} · ${a.by.name}`), h('div', { class: 'pre' }, a.text))))),
+    h('p', { class: 'small' }, `תרשומות אישיות של המטפל/ת אינן חלק מהרשומה הרפואית (סעיף 17(א) לחוק זכויות החולה) ואינן נכללות.${drafts ? ` ${drafts} רישומי טיוטה שלא נחתמו אינם נכללים.` : ''}`)
+  );
+  audit(`הדפסת/ייצוא רשומה של תיק ${p.fileNo}`); persist();
+  const clear = () => { area.replaceChildren(); removeEventListener('afterprint', clear); };
+  addEventListener('afterprint', clear);
+  window.print();
+}
+
+/* ---------- settings & security ---------- */
+function viewSettings() {
+  const st = S.settings;
+  const f = buildForm([
+    { k: 'name', l: 'שם המטפל/ת', req: true }, { k: 'license', l: 'מספר רישיון', req: true },
+    { k: 'title', l: 'תואר מקצועי (לחתימה)' }, { k: 'phone', l: 'טלפון הקליניקה', dir: 'ltr' },
+    { k: 'address', l: 'כתובת הקליניקה', full: true },
+    { k: 'autoLockMin', l: 'נעילה אוטומטית אחרי (דקות ללא פעילות)', t: 'number', min: 1 },
+  ], st);
+  const saveSettings = () => {
+    const v = f.values();
+    if (!v.name || !v.license) return alert('שם ומספר רישיון הם שדות חובה.');
+    v.autoLockMin = Math.min(Math.max(Number(v.autoLockMin) || 10, 1), 60);
+    Object.assign(st, v); dirty = false; audit('עדכון הגדרות'); persist(); resetIdle(); render();
+  };
+  const persisted = h('span', { class: 'muted' }, '…');
+  navigator.storage?.persisted?.().then(x => { persisted.textContent = x ? 'מוגן מפני מחיקה אוטומטית של הדפדפן ✓' : 'הדפדפן עלול למחוק נתונים כשהדיסק מתמלא — גיבוי קבוע חשוב במיוחד'; });
+
+  const incDate = h('input', { type: 'date', value: today() });
+  const incText = h('textarea', { rows: 3, spellcheck: 'false', placeholder: 'מה קרה, איזה מידע עלול היה להיחשף, אילו צעדים ננקטו' });
+  const addIncident = () => {
+    if (!incText.value.trim()) return;
+    S.incidents.push({ id: uid(), date: incDate.value, text: incText.value.trim(), at: nowTs() });
+    audit('תיעוד אירוע אבטחה'); persist(); render();
+  };
+  return [
+    h('div', { class: 'card' }, h('h2', null, 'פרטי המטפל/ת'), f.nodes,
+      h('div', { class: 'actions' }, h('button', { class: 'primary', onclick: saveSettings }, 'שמירה'))),
+    h('div', { class: 'card' }, h('h2', null, 'גיבוי ושחזור'),
+      h('p', { class: 'small' }, 'הגיבוי הוא קובץ מוצפן (אותה הצפנה ואותה סיסמה). שמרי אותו בדיסק-און-קי ייעודי במקום נעול. ', h('strong', null, 'אין לשמור גיבויים בתיבת דוא"ל או בוואטסאפ.')),
+      h('p', { class: 'small muted' }, `גיבוי אחרון: ${S.lastBackup ? fmtTs(S.lastBackup) : 'לא בוצע'} · ${''}`, persisted),
+      h('div', { class: 'actions' },
+        h('button', { class: 'primary', onclick: exportBackup }, 'ייצוא גיבוי מוצפן'),
+        h('button', { onclick: importBackup }, 'שחזור מגיבוי (מחליף את המידע הנוכחי)'))),
+    h('div', { class: 'card' }, h('h2', null, 'סיסמה ומפתח שחזור'),
+      h('div', { class: 'actions' },
+        h('button', { onclick: changePassword }, 'החלפת סיסמה'),
+        h('button', { onclick: newRecovery }, 'הפקת מפתח שחזור חדש'),
+        h('button', { onclick: printDbDoc }, 'הדפסת מסמך הגדרות מאגר'))),
+    h('div', { class: 'card' }, h('h2', null, 'יומן אירועי אבטחה'),
+      h('p', { class: 'small muted' }, 'תקנות אבטחת מידע מחייבות לתעד אירועי אבטחה: אובדן או גניבה של מחשב/דיסק-און-קי, חשד לגישה לא מורשית, מסירת מידע בטעות וכד\'.'),
+      S.incidents.length ? h('table', { class: 'log' }, h('tr', null, h('th', null, 'תאריך'), h('th', null, 'תיאור')),
+        [...S.incidents].reverse().map(i => h('tr', null, h('td', null, fmtDate(i.date)), h('td', { class: 'pre' }, i.text)))) : h('p', { class: 'muted small' }, 'לא תועדו אירועים.'),
+      h('div', { class: 'grid2' }, h('div', null, h('label', null, 'תאריך'), incDate), h('div', { class: 'full' }, h('label', null, 'תיאור'), incText)),
+      h('div', { class: 'actions' }, h('button', { onclick: addIncident }, 'תיעוד אירוע'))),
+    h('div', { class: 'card' }, h('h2', null, 'יומן פעולות'),
+      h('p', { class: 'small muted' }, `${S.audit.length} רשומות · מוצגות 200 האחרונות`),
+      h('table', { class: 'log' }, [...S.audit].reverse().slice(0, 200).map(a => h('tr', null, h('td', { style: 'white-space:nowrap' }, fmtTs(a.at)), h('td', null, a.a)))))
+  ];
+}
+async function exportBackup() {
+  S.lastBackup = nowTs(); audit('ייצוא גיבוי מוצפן');
+  await persist();
+  const blob = new Blob([JSON.stringify(vault)], { type: 'application/octet-stream' });
+  const a = h('a', { href: URL.createObjectURL(blob), download: `therapist-diary-backup-${today()}.tdiary` });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+  if (S) render();
+}
+async function importBackup() {
+  const inp = h('input', { type: 'file', accept: '.tdiary,application/json,application/octet-stream' });
+  inp.addEventListener('change', async () => {
+    const file = inp.files[0]; if (!file) return;
+    let bk;
+    try { bk = JSON.parse(await file.text()); if (bk.format !== FORMAT || !bk.pw || !bk.data) throw 0; }
+    catch { return alert('הקובץ אינו גיבוי תקין של יומן הטיפולים.'); }
+    const pw = await askPassword('סיסמת הגיבוי', 'הקלידי את הסיסמה שהייתה בתוקף כשהגיבוי נוצר.');
+    if (pw == null) return;
+    let data;
+    try { data = await decData(await unwrapDek(bk.pw, pw), bk.data); }
+    catch { return alert('הסיסמה שגויה או שהקובץ פגום.'); }
+    const cur = await kvGet('vault');
+    if (cur && !(await confirmBox('החלפת המידע', `הגיבוי מכיל ${data.patients.length} תיקים ו-${data.sessions.length} פגישות (נשמר ${fmtTs(bk.savedAt)}). המידע הקיים בדפדפן זה יוחלף בו. להמשיך?`, 'שחזור', 'danger'))) return;
+    await kvSet('vault', bk);
+    if (S) { S = null; dek = null; }
+    alert('השחזור הושלם. יש להיכנס עם סיסמת הגיבוי.');
+    location.reload();
+  });
+  inp.click();
+}
+async function changePassword() {
+  const cur = h('input', { type: 'password' }), p1 = h('input', { type: 'password', autocomplete: 'new-password' }), p2 = h('input', { type: 'password', autocomplete: 'new-password' });
+  const err = h('div', { class: 'note bad', hidden: true });
+  const ok = await modal('החלפת סיסמה', [h('label', null, 'סיסמה נוכחית'), cur, h('label', null, 'סיסמה חדשה (12 תווים לפחות)'), p1, h('label', null, 'אימות'), p2, err],
+    [{ label: 'החלפה', value: true, cls: 'primary', check: async () => {
+      err.hidden = true;
+      if (p1.value.length < 12 || p1.value !== p2.value) { err.textContent = 'הסיסמה החדשה קצרה מדי או שהאימות אינו תואם.'; err.hidden = false; return false; }
+      try { await unwrapDek(vault.pw, cur.value); return true; } catch { err.textContent = 'הסיסמה הנוכחית שגויה.'; err.hidden = false; return false; }
+    } }, { label: 'ביטול', value: false }]);
+  if (!ok) return;
+  vault.pw = await wrapDek(dek, p1.value);
+  audit('החלפת סיסמה'); await persist();
+  alert('הסיסמה הוחלפה. גיבויים ישנים נפתחים עדיין בסיסמה הישנה — מומלץ לייצא גיבוי חדש.');
+  render();
+}
+async function newRecovery() {
+  if (!(await confirmBox('מפתח שחזור חדש', 'המפתח הקודם יפסיק לעבוד. להמשיך?', 'הפקה'))) return;
+  const rk = newRecoveryKey();
+  vault.rk = await wrapDek(dek, normRk(rk));
+  audit('הפקת מפתח שחזור חדש'); await persist();
+  await modal('מפתח השחזור החדש', [h('p', null, 'רשמי אותו על נייר ושמרי במקום נעול:'), h('div', { class: 'reckey' }, rk)], [{ label: 'רשמתי', value: true, cls: 'primary' }]);
+}
+function printDbDoc() {
+  const st = S.settings;
+  const rows = [
+    ['שם המאגר', 'רשומות מטופלים — קליניקה פרטית'],
+    ['בעל המאגר ומנהלו', `${st.name}, מ.ר. ${st.license}${st.address ? ', ' + st.address : ''}`],
+    ['סיווג לפי התקנות', 'מאגר המנוהל בידי יחיד (משתמשת יחידה)'],
+    ['מטרות המאגר', 'ניהול רשומה רפואית כנדרש בסעיף 17 לחוק זכויות החולה; ניהול הטיפול הפסיכולוגי ורציפותו'],
+    ['סוגי המידע', 'פרטים מזהים ופרטי קשר; עבר רפואי ונפשי; תיעוד פגישות, הערכות ואבחנות; הוראות טיפול; תרשומת אישית; הסכמות — מידע בעל רגישות מיוחדת'],
+    ['מקורות המידע', 'המטופל עצמו; גורמים מפנים בהסכמת המטופל; התרשמות המטפלת'],
+    ['מספר רשומות (נכון להיום)', `${S.patients.length} תיקים, ${S.sessions.length} רישומי פגישה`],
+    ['מיקום', 'מחשב הקליניקה, מוצפן בדפדפן; גיבוי מוצפן בהתקן נייד ייעודי השמור בארון נעול'],
+    ['בעלי הרשאה', `${st.name} בלבד`],
+    ['העברות מידע', 'אין העברה שוטפת. מסירה למטופל או לצד ג\' רק בהסכמה או לפי דין, ותיעודה ביומן הפעולות'],
+    ['אמצעי אבטחה', 'הצפנת AES-256-GCM; מפתח נגזר מסיסמה (PBKDF2-SHA256, 600,000 סבבים); חסימת תקשורת רשת; נעילה אוטומטית; יומן פעולות; יומן אירועי אבטחה; הצפנת דיסק ונעילת מחשב'],
+    ['תקופת שמירה', 'לפחות 7 שנים מהרישום האחרון; לקטינים — לפחות עד גיל 25'],
+    ['סיכונים עיקריים ומענה', 'גניבת מחשב/התקן — הצפנה; שכחת סיסמה — מפתח שחזור בכספת; אובדן נתונים — גיבוי שבועי; תוכנה זדונית — עדכונים ואנטי-וירוס, פרופיל דפדפן ללא תוספים'],
+  ];
+  $('#print-area').replaceChildren(h('h1', null, 'מסמך הגדרות מאגר מידע'), h('p', null, `לפי תקנות הגנת הפרטיות (אבטחת מידע), התשע"ז-2017 · עודכן ${fmtDate(today())}`),
+    h('dl', { class: 'kv' }, rows.map(([k, v]) => [h('dt', null, k), h('dd', null, v)])),
+    h('p', { style: 'margin-top:40px' }, 'חתימה: ____________________   תאריך: ____________'));
+  const clear = () => { $('#print-area').replaceChildren(); removeEventListener('afterprint', clear); };
+  addEventListener('afterprint', clear);
+  window.print();
+}
+
+function viewGuide() { return $('#tpl-guide').content.cloneNode(true); }
+
+boot();
+})();
+</script>
+</body>
+</html>
